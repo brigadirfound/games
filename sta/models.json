@@ -1,0 +1,365 @@
+{
+  "_": [
+    "Список 3D-моделей с Poly Pizza. Качает tools/fetch-models.js.",
+    "Модели указаны по ID, а не по поисковому запросу: выдача поиска меняется,",
+    "и сборка перестала бы быть воспроизводимой.",
+    "",
+    "slot   — ключ, по которому модель ищет игра. Для машин совпадает с",
+    "         CAR_TYPES.id из src/vehicle.js (плюс отдельный слот police).",
+    "fitZ   — целевая длина в метрах, берётся из CAR_TYPES.l того же типа:",
+    "         модель масштабируется равномерно под уже существующие габариты,",
+    "         чтобы физика и коллизии не разъехались с картинкой.",
+    "fitY   — целевая высота в метрах, для пропсов (у дерева важна высота).",
+    "orient — довернуть по длинной оси и по фарам; нужно машинам, не пропсам.",
+    "",
+    "Лицензии — только CC0 и CC-BY, обе разрешают коммерческое использование.",
+    "Атрибуция пишется в assets/models/PROVENANCE.md автоматически."
+  ],
+  "vehicles": [
+    {
+      "slot": "compact",
+      "renderOut": "assets/models/vehicles/approved/compact.glb",
+      "fitZ": 3.8,
+      "orient": true,
+      "sourceCandidate": "compact"
+    },
+    {
+      "slot": "coupe",
+      "id": "unqqkULtRU",
+      "out": "assets/models/vehicles/coupe.glb",
+      "orient": true,
+      "fitZ": 4.6,
+      "renderOut": "assets/models/vehicles/approved/coupe.glb",
+      "sourceCandidate": "coupe"
+    },
+    {
+      "slot": "roadster",
+      "id": "Gzj704DXdr",
+      "out": "assets/models/vehicles/roadster.glb",
+      "orient": true,
+      "fitZ": 4.1,
+      "renderOut": "assets/models/vehicles/approved/roadster.glb",
+      "sourceCandidate": "hatchback"
+    },
+    {
+      "slot": "van",
+      "id": "9hUUD2DWk1v",
+      "out": "assets/models/vehicles/van.glb",
+      "orient": true,
+      "fitZ": 5.1,
+      "renderOut": "assets/models/vehicles/approved/van.glb",
+      "sourceCandidate": "minivan"
+    },
+    {
+      "slot": "muscle",
+      "id": "OyqKvX9xNh",
+      "out": "assets/models/vehicles/muscle.glb",
+      "orient": true,
+      "fitZ": 4.5,
+      "renderOut": "assets/models/vehicles/approved/muscle.glb",
+      "sourceCandidate": "offroad"
+    },
+    {
+      "slot": "pickup",
+      "id": "qn4grQgHm8",
+      "out": "assets/models/vehicles/pickup.glb",
+      "orient": true,
+      "fitZ": 5.0,
+      "renderOut": "assets/models/vehicles/approved/pickup.glb",
+      "sourceCandidate": "pickup"
+    },
+    {
+      "slot": "sedan",
+      "id": "Cz6yDaUcM9",
+      "out": "assets/models/vehicles/sedan.glb",
+      "orient": true,
+      "fitZ": 4.6,
+      "renderOut": "assets/models/vehicles/approved/sedan.glb",
+      "sourceCandidate": "sedan"
+    },
+    {
+      "slot": "sport",
+      "id": "1mkmFkAz5v",
+      "out": "assets/models/vehicles/sport.glb",
+      "orient": true,
+      "fitZ": 4.2,
+      "renderOut": "assets/models/vehicles/approved/sport.glb",
+      "sourceCandidate": "sport"
+    },
+    {
+      "slot": "suv",
+      "id": "xsMtZhBkxL",
+      "out": "assets/models/vehicles/suv.glb",
+      "orient": true,
+      "fitZ": 5.0,
+      "renderOut": "assets/models/vehicles/approved/suv.glb",
+      "sourceCandidate": "suv"
+    },
+    {
+      "slot": "wagon",
+      "renderOut": "assets/models/vehicles/approved/wagon.glb",
+      "fitZ": 4.7,
+      "orient": true,
+      "sourceCandidate": "wagon"
+    },
+    {
+      "slot": "ambul",
+      "id": "a27WN4TXbwk",
+      "out": "assets/models/vehicles/ambul.glb",
+      "orient": true,
+      "fitZ": 5.6,
+      "renderOut": "assets/models/vehicles/approved/ambul.glb",
+      "sourceCandidate": "ambulance"
+    },
+    {
+      "slot": "bus",
+      "id": "bsvS0E1eo4R",
+      "out": "assets/models/vehicles/bus.glb",
+      "orient": true,
+      "fitZ": 10.0,
+      "renderOut": "assets/models/vehicles/approved/bus.glb",
+      "sourceCandidate": "bus"
+    },
+    {
+      "slot": "fire",
+      "id": "7iHJ519SwxG",
+      "out": "assets/models/vehicles/fire.glb",
+      "orient": true,
+      "fitZ": 8.0,
+      "renderOut": "assets/models/vehicles/approved/fire.glb",
+      "sourceCandidate": "fire"
+    },
+    {
+      "slot": "garbage",
+      "renderOut": "assets/models/vehicles/approved/garbage.glb",
+      "fitZ": 7.5,
+      "orient": true,
+      "sourceCandidate": "garbage"
+    },
+    {
+      "slot": "police",
+      "id": "BwwnUrWGmV",
+      "out": "assets/models/vehicles/police.glb",
+      "orient": true,
+      "fitZ": 4.6,
+      "renderOut": "assets/models/vehicles/approved/police.glb",
+      "sourceCandidate": "police"
+    },
+    {
+      "slot": "truck",
+      "id": "cXw6oiFtZ8",
+      "out": "assets/models/vehicles/truck.glb",
+      "orient": true,
+      "fitZ": 6.499999999999999,
+      "renderOut": "assets/models/vehicles/approved/truck.glb",
+      "sourceCandidate": "truck"
+    },
+    {
+      "slot": "schoolbus",
+      "renderOut": "assets/models/vehicles/approved/schoolbus.glb",
+      "fitZ": 8.0,
+      "orient": true,
+      "sourceCandidate": "schoolbus"
+    },
+    {
+      "slot": "taxi",
+      "id": "x43lOScTpN",
+      "out": "assets/models/vehicles/taxi.glb",
+      "orient": true,
+      "fitZ": 4.6,
+      "renderOut": "assets/models/vehicles/approved/taxi.glb",
+      "sourceCandidate": "taxi"
+    },
+    {
+      "slot": "tow",
+      "renderOut": "assets/models/vehicles/approved/tow.glb",
+      "fitZ": 6.5,
+      "orient": true,
+      "sourceCandidate": "tow"
+    },
+    {
+      "slot": "postvan",
+      "renderOut": "assets/models/vehicles/approved/postvan.glb",
+      "fitZ": 5.1,
+      "orient": true,
+      "sourceCandidate": "postvan"
+    },
+    {
+      "slot": "bike",
+      "id": "0lBe-ApqJs4",
+      "out": "assets/models/vehicles/bike.glb",
+      "orient": true,
+      "fitZ": 2.2,
+      "renderOut": "assets/models/vehicles/approved/bike.glb",
+      "sourceCandidate": "jawa"
+    },
+    {
+      "slot": "scooter",
+      "id": "blGLclvvdEM",
+      "out": "assets/models/vehicles/scooter.glb",
+      "orient": true,
+      "fitZ": 1.85,
+      "renderOut": "assets/models/vehicles/approved/scooter.glb",
+      "sourceCandidate": "scooter"
+    },
+    {
+      "slot": "tank",
+      "renderOut": "assets/models/vehicles/approved/tank.glb",
+      "fitZ": 9.5,
+      "orient": true,
+      "sourceCandidate": "tank"
+    }
+  ],
+  "props": [
+    {
+      "slot": "tree1",
+      "id": "1BkD9JnKrE",
+      "out": "assets/models/props/tree1.glb",
+      "fitY": 7.5
+    },
+    {
+      "slot": "tree2",
+      "id": "QN3Ru02ayU",
+      "out": "assets/models/props/tree2.glb",
+      "fitY": 6.5
+    },
+    {
+      "slot": "tree3",
+      "id": "ORCbG8dslS",
+      "out": "assets/models/props/tree3.glb",
+      "fitY": 9
+    },
+    {
+      "slot": "bush",
+      "id": "rnq2i4uw3i",
+      "out": "assets/models/props/bush.glb",
+      "fitY": 1.1
+    },
+    {
+      "slot": "trashcan",
+      "id": "eoC8NFaafh",
+      "out": "assets/models/props/trashcan.glb",
+      "fitY": 1
+    },
+    {
+      "slot": "dumpster",
+      "id": "QmYKHtUnxb",
+      "out": "assets/models/props/dumpster.glb",
+      "fitY": 1.4
+    },
+    {
+      "slot": "trashbag",
+      "id": "fLNcjJnsJi",
+      "out": "assets/models/props/trashbag.glb",
+      "fitY": 0.7
+    },
+    {
+      "slot": "bench",
+      "id": "UFhTqUnoUn",
+      "out": "assets/models/props/bench.glb",
+      "fitY": 0.9
+    },
+    {
+      "slot": "streetlight",
+      "id": "vPFSLYh6sg",
+      "out": "assets/models/props/streetlight.glb",
+      "fitY": 5.5
+    },
+    {
+      "slot": "hydrant",
+      "id": "thffn9bO75",
+      "out": "assets/models/props/hydrant.glb",
+      "fitY": 0.8
+    },
+    {
+      "slot": "cone",
+      "id": "lAx8JytxGD",
+      "out": "assets/models/props/cone.glb",
+      "fitY": 0.7
+    },
+    {
+      "slot": "crate",
+      "id": "yCBoU0iyOk",
+      "out": "assets/models/props/crate.glb",
+      "fitY": 0.9
+    },
+    {
+      "slot": "boxes",
+      "id": "bs6ikOeTrR",
+      "out": "assets/models/props/boxes.glb",
+      "fitY": 0.8
+    },
+    {
+      "slot": "barrel",
+      "id": "hTJs1zFzFz",
+      "out": "assets/models/props/barrel.glb",
+      "fitY": 0.9
+    },
+    {
+      "slot": "pallet",
+      "id": "J6bhnc2wFP",
+      "out": "assets/models/props/pallet.glb",
+      "fitY": 0.16
+    },
+    {
+      "slot": "sodacan",
+      "id": "MWvBbxYzjJ",
+      "out": "assets/models/props/sodacan.glb",
+      "fitY": 0.12
+    },
+    {
+      "slot": "pizzabox",
+      "id": "PSqXX0pj5o",
+      "out": "assets/models/props/pizzabox.glb",
+      "fitY": 0.1
+    },
+    {
+      "slot": "watertower",
+      "id": "WGSUkExDJ4",
+      "out": "assets/models/props/watertower.glb",
+      "fitY": 6
+    },
+    {
+      "slot": "watertank",
+      "id": "XVB8vUbnZb",
+      "out": "assets/models/props/watertank.glb",
+      "fitY": 2.6
+    },
+    {
+      "slot": "antenna",
+      "id": "OuHQCigiUR",
+      "out": "assets/models/props/antenna.glb",
+      "fitY": 4.5
+    },
+    {
+      "slot": "satdish",
+      "id": "IDRrztoAMB",
+      "out": "assets/models/props/satdish.glb",
+      "fitY": 1.7
+    },
+    {
+      "slot": "roofvent",
+      "id": "UDFcnJ0U73",
+      "out": "assets/models/props/roofvent.glb",
+      "fitY": 1.3
+    },
+    {
+      "slot": "tree4",
+      "id": "8qABc2Nslz",
+      "out": "assets/models/props/tree4.glb",
+      "fitY": 7
+    },
+    {
+      "slot": "tree5",
+      "id": "9nvGuZlbpE",
+      "out": "assets/models/props/tree5.glb",
+      "fitY": 6.4
+    },
+    {
+      "slot": "tree6",
+      "id": "2lRubrT6Na",
+      "out": "assets/models/props/tree6.glb",
+      "fitY": 7.6
+    }
+  ]
+}

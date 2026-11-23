@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<!--
+  SDK CrazyGames — обычным тегом и до кода игры.
+
+  Яндексовая сборка вставляла свой скрипт из JavaScript, и это стоило ей
+  блокировки на модерации: проверка встроенного SDK там статическая. Здесь
+  причина другая, но вывод тот же — SDK должен быть готов раньше, чем игрок
+  дойдёт до первого матча, иначе разметка геймплея уедет мимо.
+-->
+<script src="https://sdk.crazygames.com/crazygames-sdk-v3.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Ghostfire</title>
+<style>
+.ad-active body { pointer-events: none; }
+  /* Игровой шрифт: Russo One на заголовки и кнопки, Exo 2 на текст и цифры.
+     Оба OFL, лежат в assets/fonts — self-host, как и всё остальное. */
+  @font-face { font-family: 'Russo One'; src: url('assets/fonts/russo-one-latin.woff2') format('woff2');
+    font-weight: 400; font-display: swap; unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215; }
+  @font-face { font-family: 'Russo One'; src: url('assets/fonts/russo-one-cyrillic.woff2') format('woff2');
+    font-weight: 400; font-display: swap; unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116; }
+  @font-face { font-family: 'Exo 2'; src: url('assets/fonts/exo2-latin-600.woff2') format('woff2');
+    font-weight: 600; font-display: swap; unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+2000-206F, U+20AC, U+2122; }
+  @font-face { font-family: 'Exo 2'; src: url('assets/fonts/exo2-cyrillic-600.woff2') format('woff2');
+    font-weight: 600; font-display: swap; unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116; }
+  @font-face { font-family: 'Exo 2'; src: url('assets/fonts/exo2-latin-800i.woff2') format('woff2');
+    font-weight: 800; font-style: italic; font-display: swap; unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+2000-206F, U+20AC, U+2122; }
+  @font-face { font-family: 'Exo 2'; src: url('assets/fonts/exo2-cyrillic-800i.woff2') format('woff2');
+    font-weight: 800; font-style: italic; font-display: swap; unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116; }
+</style>
+<style>
+  :root {
+    --accent: #ff5533;
+    --accent2: #33ddff;
+    --bg: #101418;
+    --panel: rgba(16, 20, 24, 0.92);
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg); font-family: 'Exo 2', 'Segoe UI', system-ui, sans-serif; color: #fff;
+    touch-action: none; overscroll-behavior: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+  input, textarea, select, [contenteditable="true"] { user-select: text; -webkit-user-select: text; touch-action: auto; }
+  #game-canvas { position: fixed; inset: 0; display: block; touch-action: none; }
+  #mobile-ui, #stick-zone, #look-zone, #hud { touch-action: none; }
+
+  .screen { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 16px; background: var(--panel); z-index: 20; overflow-y: auto; padding: calc(20px + var(--safe-top)) max(12px, var(--safe-right)) calc(20px + var(--safe-bottom)) max(12px, var(--safe-left)); touch-action: pan-y; }
+  /* центр при коротком контенте, скролл сверху при длинном */
+  .screen > :first-child { margin-top: auto; }
+  /* Лестница ежедневного подарка: пять ступеней, пройденные горят. */
+  .daily-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+  .daily-day { min-width: 74px; padding: 10px 6px; border-radius: 10px; text-align: center;
+    background: #1a2029; border: 2px solid #2a3442; opacity: .55; }
+  .daily-day .d { font-size: 11px; letter-spacing: 1px; opacity: .7; text-transform: uppercase; }
+  .daily-day .c { display: flex; align-items: center; justify-content: center; gap: 5px;
+    font-weight: 900; font-size: 19px; margin-top: 4px; }
+  .daily-day .c img { width: 18px; height: 18px; }
+  .daily-day.done { opacity: 1; border-color: #3d5a3d; }
+  .daily-day.now { opacity: 1; border-color: var(--accent2); box-shadow: 0 0 0 2px #33ddff44; }
+  .screen > :last-child { margin-bottom: auto; }
+  #screen-menu { background: linear-gradient(rgba(16,20,24,.30), rgba(16,20,24,.88)), url('assets/menu-bg.jpg') center / cover; }
+  .hidden { display: none !important; }
+
+  .logo {
+    width: min(560px, 78vw); height: auto; display: block;
+    margin: 0 auto 2px; user-select: none; -webkit-user-drag: none;
+    filter: drop-shadow(0 6px 14px rgba(0,0,0,.55));
+  }
+  .subtitle { opacity: .7; margin-top: -12px; margin-bottom: 12px; }
+
+  .btn { min-width: 240px; padding: 14px 28px; font-size: 20px; font-weight: 400; color: #fff;
+    font-family: 'Russo One', 'Exo 2', sans-serif; display: inline-flex; align-items: center; justify-content: center; gap: 12px;
+    background: #232a33; border: 3px solid #3a4450; border-radius: 6px; cursor: pointer;
+    text-transform: uppercase; letter-spacing: 1px; transition: transform .06s, border-color .1s; }
+  .btn:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .btn.primary { background: var(--accent); border-color: #ff7755; }
+  .btn.small { min-width: 140px; padding: 8px 16px; font-size: 15px; }
+  .btn:disabled { opacity: .4; cursor: default; }
+
+  /* Кнопки меню одной ширины: иконка слева, подпись выровнена по левому краю,
+     иначе строки разной длины прыгают и колонка выглядит рваной. */
+  #screen-menu .btn { width: min(340px, 88vw); min-width: 0; justify-content: flex-start; gap: 14px; padding: 14px 22px; }
+  #screen-menu .btn span { flex: 1 1 auto; text-align: left; font-size: 19px; }
+  #screen-menu .btn .icon { width: 28px; height: 28px; flex: 0 0 28px; }
+
+  .row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+
+  /* Карточка скина: превью с силуэтом в цветах скина, имя, цена. */
+  .skin-card { width: 190px; background: #1a2028; border: 3px solid #2a3038; border-radius: 10px;
+    padding: 10px; cursor: pointer; text-align: center; transition: border-color .12s, transform .08s; }
+  .skin-card:hover { border-color: var(--accent2); transform: translateY(-2px); }
+  .skin-card.selected { border-color: var(--accent); }
+  .skin-card.locked { opacity: .62; }
+  .skin-preview { position: relative; height: 130px; border-radius: 7px; overflow: hidden; margin-bottom: 8px; }
+  .skin-figure { position: absolute; inset: 14px 30px 10px; -webkit-mask: url('assets/icons/ghost.png') center/contain no-repeat;
+    mask: url('assets/icons/ghost.png') center/contain no-repeat; filter: drop-shadow(0 3px 6px #0008); }
+  .skin-stripe { position: absolute; left: 0; right: 0; bottom: 0; height: 5px; }
+  .skin-art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .2s; }
+  .skin-preview.has-art .skin-art { opacity: 1; }
+  .skin-preview.has-art .skin-figure { display: none; }
+  .skin-name { font-family: 'Russo One', 'Exo 2', sans-serif; font-size: 16px; letter-spacing: .5px; }
+  .skin-price { display: flex; align-items: center; justify-content: center; gap: 5px; margin-top: 4px; font-size: 17px; font-weight: 700; }
+  .skin-price b { color: var(--accent2); }
+  .skin-state { color: #7ddc8a; font-size: 15px; }
+  .skin-note { font-size: 12px; opacity: .65; margin-top: 4px; line-height: 1.3; }
+
+  .howto-card { width: min(560px, 92vw); background: #1a2028; border: 2px solid #2a3038; border-left: 4px solid var(--accent2);
+    border-radius: 8px; padding: 12px 16px; text-align: left; }
+  .howto-head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .howto-title { font-family: 'Russo One', 'Exo 2', sans-serif; font-size: 17px; text-transform: uppercase; letter-spacing: 1px; }
+  .howto-text { font-size: 15px; line-height: 1.45; opacity: .85; }
+
+  h2 { font-family: 'Russo One', 'Exo 2', sans-serif; font-weight: 400; font-size: 28px; text-transform: uppercase; letter-spacing: 2px; }
+  .map-card { width: 200px; padding: 14px; background: #232a33; border: 3px solid #3a4450; border-radius: 6px; cursor: pointer; text-align: center; }
+  .map-thumb { width: 100%; height: 92px; object-fit: contain; image-rendering: pixelated; background: #12161c; border-radius: 4px; margin-bottom: 8px; }
+  .map-card:hover, .map-card.selected { border-color: var(--accent2); }
+  .map-card .map-name { font-weight: 700; font-size: 18px; }
+  .map-card .map-desc { font-size: 13px; opacity: .7; margin-top: 6px; }
+
+  .ghost-card { width: min(420px, 88vw); padding: 12px 18px; background: #232a33; border: 3px solid #3a4450; border-radius: 6px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+  .ghost-card:hover { border-color: var(--accent); }
+  .ghost-card .gname { font-weight: 700; font-size: 18px; }
+  .ghost-card .gdesc { font-size: 13px; opacity: .7; }
+  .ghost-card .gdiff { color: var(--accent); font-weight: 900; font-size: 20px; }
+
+  textarea#challenge-input { width: min(420px, 88vw); height: 90px; background: #181d23; color: #9fd; border: 2px solid #3a4450; border-radius: 6px; padding: 10px; font-family: monospace; font-size: 12px; resize: none; }
+
+  .setting-row { display: flex; justify-content: space-between; align-items: center; width: min(420px, 88vw); padding: 10px 0; border-bottom: 1px solid #2a3038; }
+
+  /* HUD */
+  #hud { position: fixed; inset: 0; pointer-events: none; z-index: 10; }
+  #crosshair { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 22px; height: 22px; }
+  #crosshair::before, #crosshair::after { content: ""; position: absolute; background: #fff; box-shadow: 0 0 3px #000; }
+  #crosshair::before { left: 50%; top: 0; width: 2px; height: 100%; transform: translateX(-50%); }
+  #crosshair::after { top: 50%; left: 0; height: 2px; width: 100%; transform: translateY(-50%); }
+  #crosshair.charging::before, #crosshair.charging::after { background: var(--accent2); }
+
+  /* Оптика снайперки: затемнённые поля + тонкое перекрестие по центру. */
+  #scope { position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(circle at 50% 50%, rgba(0,0,0,0) 26%, rgba(0,0,0,.72) 34%, #000 46%); }
+  #scope-h, #scope-v { position: absolute; background: rgba(255,255,255,.45); }
+  #scope-h { left: 18%; right: 18%; top: 50%; height: 1px; }
+  #scope-v { top: 12%; bottom: 12%; left: 50%; width: 1px; }
+  /* Иконки интерфейса (assets/icons) — белые PNG с альфой, красим фильтром. */
+  .icon { width: 26px; height: 26px; flex: 0 0 26px; object-fit: contain; }
+  /* Монета в тексте: подстраивается под размер строки, как эмодзи раньше. */
+  /* Монета белая, поэтому подкрашивается фильтром: так она читается монетой,
+     а не серым кружком, и остаётся одним файлом на все места. */
+  .coin { width: 1.25em; height: 1.25em; object-fit: contain; vertical-align: -0.24em; margin-left: .22em;
+    filter: brightness(1.05) sepia(1) saturate(5) hue-rotate(-12deg) drop-shadow(0 1px 1px #0008); }
+  .bigscore .coin { width: .62em; height: .62em; vertical-align: -0.02em; margin-right: .1em; }
+  .btn .icon { filter: drop-shadow(0 2px 0 #0008); }
+
+  /* Панель показа скина: холст, замок поверх и кнопка покупки. */
+  .shop-stage { position: relative; width: min(520px, 92vw); margin: 4px auto 10px;
+    display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .shop-canvas { width: 100%; aspect-ratio: 16 / 10; display: block;
+    border-radius: 10px; background: radial-gradient(circle at 50% 120%, #223047 0%, #10141e 65%, #0a0d14 100%);
+    border: 2px solid #2a3442; }
+  .shop-lock { position: absolute; top: 10px; right: 12px; width: 34px; height: 34px;
+    color: #ffd75e; filter: drop-shadow(0 2px 4px #000a); }
+  .shop-lock::before { width: 34px; height: 34px; margin: 0; vertical-align: top; }
+  .shop-stage-name { font-family: 'Russo One', 'Exo 2', sans-serif; font-size: 20px; letter-spacing: 1px; }
+  .skin-card.picked { border-color: #33ddff; box-shadow: 0 0 0 2px #33ddff55; }
+  /* Иконки-маски: красятся цветом текста и переживают смену подписи. */
+  .ico-ad::before, .ico-lock::before, .ico-ghost::before {
+    content: ''; display: inline-block; width: 1.05em; height: 1.05em;
+    margin-right: .38em; vertical-align: -.16em; background: currentColor;
+    -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+    -webkit-mask-position: center; mask-position: center;
+    -webkit-mask-size: contain; mask-size: contain;
+  }
+  .ico-ad::before { -webkit-mask-image: url('assets/icons/ad.png'); mask-image: url('assets/icons/ad.png'); }
+  .ico-lock::before { -webkit-mask-image: url('assets/icons/lock.png'); mask-image: url('assets/icons/lock.png'); }
+  .ico-ghost::before { -webkit-mask-image: url('assets/icons/ghost.png'); mask-image: url('assets/icons/ghost.png'); margin-right: 0; }
+
+
+  #hp-bar { position: absolute; left: calc(20px + var(--safe-left)); bottom: calc(20px + var(--safe-bottom)); width: 220px; }
+  #hp-num { display: flex; align-items: center; gap: 8px; }
+  #hp-heart { width: 30px; height: 30px; filter: drop-shadow(0 0 6px rgba(255,60,40,.75))
+    invert(38%) sepia(72%) saturate(3800%) hue-rotate(348deg) brightness(98%) contrast(96%); }
+
+  /* Правый нижний угол как в CS:GO: силуэт пушки, поверх — счётчик патронов. */
+  #weapon-block { position: absolute; right: calc(20px + var(--safe-right)); bottom: calc(16px + var(--safe-bottom));
+    display: flex; align-items: flex-end; gap: 4px; text-align: right; }
+  #weapon-silhouette { width: 132px; max-width: 26vw; opacity: .95; margin-bottom: 2px;
+    filter: drop-shadow(0 2px 3px #000c) brightness(1.15); }
+  #weapon-readout { display: flex; align-items: flex-end; gap: 10px; }
+  #ammo-icon { width: 24px; height: 24px; opacity: .8; margin-bottom: 6px; }
+  #hp-fill { height: 22px; background: linear-gradient(90deg, #ff3322, #ff7744); border-radius: 4px; transition: width .15s; box-shadow: 0 0 8px rgba(255,60,30,.6); }
+  #hp-bar .frame { border: 3px solid #fff3; border-radius: 6px; padding: 2px; background: #0008; }
+  #hp-num { font-size: 26px; font-weight: 900; text-shadow: 2px 2px 0 #000; margin-bottom: 4px; }
+
+  #weapon-label { font-family: 'Russo One', 'Exo 2', sans-serif; font-size: 20px; font-weight: 400; text-transform: uppercase; text-shadow: 2px 2px 0 #000; letter-spacing: 1px; }
+  #ammo { font-family: 'Exo 2', sans-serif; font-style: italic; font-weight: 800; font-size: 40px; line-height: .95; letter-spacing: 1px; text-shadow: 2px 2px 0 #000; }
+  #ammo-max { font-size: 18px; opacity: .55; }
+  #ammo.low #ammo-cur { color: #ff5544; }
+  /* Место под строку зарезервировано всегда: visibility, а не display. */
+  #reload-note { font-size: 13px; letter-spacing: 1px; color: var(--accent2); margin-bottom: 3px; }
+  #reload-note.idle { visibility: hidden; }
+  #reload-bar { width: 96px; height: 5px; margin-left: auto; margin-top: 2px; background: #0008; border: 1px solid #fff3; border-radius: 3px; overflow: hidden; }
+  #reload-fill { height: 100%; width: 0; background: var(--accent2); transition: width .05s linear; }
+  #score-mini { font-family: 'Russo One', 'Exo 2', sans-serif; font-weight: 400; position: absolute; top: calc(14px + var(--safe-top)); left: 50%; transform: translateX(-50%); font-size: 26px; font-weight: 900; text-shadow: 2px 2px 0 #000; letter-spacing: 2px; background: #0006; padding: 4px 18px; border-radius: 8px; }
+  /* Счётчик стаи под счётом: сколько призраков ещё стоит. */
+  #pack-left { position: absolute; top: calc(54px + var(--safe-top)); left: 50%; transform: translateX(-50%);
+    display: flex; gap: 7px; background: #0006; padding: 5px 12px; border-radius: 8px; color: #bfe6ff; }
+  #pack-left .ico-ghost::before { width: 20px; height: 20px; vertical-align: top;
+    filter: drop-shadow(0 0 4px #4bd8ff88); transition: opacity .25s; }
+  #pack-left .dead::before { opacity: .2; filter: none; }
+  #hitmarker { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%) rotate(45deg); width: 30px; height: 30px; opacity: 0; }
+  #hitmarker::before, #hitmarker::after { content:""; position:absolute; background:#ff4433; }
+  #hitmarker::before { left:50%; top:0; width:3px; height:100%; transform:translateX(-50%); }
+  #hitmarker::after { top:50%; left:0; height:3px; width:100%; transform:translateY(-50%); }
+  #hitmarker.pop { animation: hitpop .18s ease-out; }
+  @keyframes hitpop { 0% { opacity:1; transform:translate(-50%,-50%) rotate(45deg) scale(1.4);} 100% { opacity:0; transform:translate(-50%,-50%) rotate(45deg) scale(.8);} }
+  #damage-vignette { position: absolute; inset: 0; box-shadow: inset 0 0 120px rgba(255,0,0,.55); opacity: 0; transition: opacity .4s; }
+
+  #countdown { position: absolute; left: 50%; top: 38%; transform: translate(-50%,-50%); font-size: 110px; font-weight: 900; color: var(--accent2); text-shadow: 5px 5px 0 #000; }
+  /* Килфид: плашка с иконкой зоны, текстом и силуэтом оружия. */
+  #round-banner { position: absolute; left: 50%; top: 22%; transform: translateX(-50%);
+    display: flex; align-items: center; gap: 12px; padding: 8px 18px;
+    background: linear-gradient(90deg, #0e131aee, #1b2430ee, #0e131aee);
+    border: 2px solid #3a4450; border-left: 4px solid var(--accent); border-right: 4px solid var(--accent);
+    border-radius: 8px; box-shadow: 0 6px 24px #000a;
+    font-family: 'Russo One', 'Exo 2', sans-serif; font-size: 24px; font-weight: 400;
+    letter-spacing: 1px; text-shadow: 2px 2px 0 #000; white-space: nowrap;
+    animation: killfeed-in .18s ease-out; }
+  #round-banner.lost { border-left-color: #ff3322; border-right-color: #ff3322; }
+  #round-banner.head #banner-zone { filter: drop-shadow(0 0 6px rgba(255,190,60,.9)); }
+  #banner-zone { width: 34px; height: 34px; object-fit: contain; }
+  #banner-weapon { height: 34px; max-width: 120px; object-fit: contain; opacity: .95; }
+  @keyframes killfeed-in { from { opacity: 0; transform: translate(-50%, -10px) scale(.96); }
+    to { opacity: 1; transform: translate(-50%, 0) scale(1); } }
+
+  /* Экраны раунда и матча: одна панель на оба. */
+  .result-panel { width: min(560px, 92vw); background: linear-gradient(180deg, #1b2430f2, #10161ef2);
+    border: 3px solid #2a3038; border-radius: 14px; padding: 18px 20px 20px; text-align: center;
+    box-shadow: 0 14px 40px #000a, inset 0 1px 0 #ffffff12; }
+  .result-panel.win { border-color: var(--accent2); }
+  .result-panel.lose { border-color: #ff4433; }
+  .result-badge { width: 92px; height: 92px; object-fit: contain; margin-bottom: -6px;
+    filter: drop-shadow(0 0 14px rgba(51,221,255,.45)); }
+  .result-panel.lose .result-badge { filter: drop-shadow(0 0 14px rgba(255,68,51,.45)); }
+  .result-title { font-family: 'Russo One', 'Exo 2', sans-serif; font-size: 30px; letter-spacing: 2px;
+    text-transform: uppercase; margin: 2px 0 6px; }
+  .result-stats { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 10px; margin-top: 12px; }
+  .stat-chip { display: flex; align-items: center; gap: 7px; padding: 6px 12px; background: #0e131a99;
+    border: 1px solid #2a3038; border-radius: 999px; font-size: 14px; }
+  .stat-chip img { width: 18px; height: 18px; object-fit: contain; opacity: .85; }
+  .stat-chip b { color: var(--accent2); font-size: 16px; }
+  .stat-chip.gold b { color: #ffd75e; }
+  #toast { position: fixed; bottom: calc(44px + var(--safe-bottom)); left: 50%; transform: translateX(-50%); background: #232a33; border: 2px solid var(--accent2); border-radius: 8px; padding: 10px 22px; font-weight: 700; z-index: 60; opacity: 0; transition: opacity .25s; pointer-events: none; max-width: 90vw; text-align: center; }
+  #toast.show { opacity: 1; }
+  .reward-box { width: min(340px, 86vw); background: #1a2028; border: 2px solid #2a3038; border-radius: 8px; padding: 10px 16px; }
+  .reward-row { display: flex; justify-content: space-between; padding: 3px 0; font-size: 15px; }
+  .reward-row b { color: var(--accent2); }
+  .reward-row.bonus span { color: #ffd75e; }
+  .reward-row.total { border-top: 1px solid #2a3038; margin-top: 4px; padding-top: 7px; font-weight: 900; }
+  #tut-box { position: absolute; top: calc(64px + var(--safe-top)); left: 50%; transform: translateX(-50%); background: #1a2028ee; border: 2px solid var(--accent2); border-radius: 10px; padding: 12px 14px 12px 20px; font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 12px; pointer-events: auto; max-width: 92vw; }
+  #tut-close { background: none; border: none; color: #fff8; font-size: 20px; cursor: pointer; padding: 2px 6px; }
+  #tut-arrow {
+    position: absolute; width: 46px; height: 46px;
+    transform: translate(-50%, -100%);
+    transition: left .1s linear, top .1s linear;
+    background: #ffe14d;
+    filter: drop-shadow(0 3px 0 #0009);
+    -webkit-mask: url('assets/icons/arrow-down.png') center/contain no-repeat;
+            mask: url('assets/icons/arrow-down.png') center/contain no-repeat;
+    animation: tutbob 1s ease-in-out infinite alternate;
+  }
+  @keyframes tutbob { from { margin-top: 0; } to { margin-top: 9px; } }
+  @media (prefers-reduced-motion: reduce) { #tut-arrow { animation: none; } }
+  #preloader { position: fixed; inset: 0; background: var(--bg); z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 26px; transition: opacity .35s; }
+  #preloader.done { opacity: 0; pointer-events: none; }
+  #preloader-bar { width: min(320px, 70vw); height: 14px; background: #232a33; border: 2px solid #3a4450; border-radius: 8px; overflow: hidden; }
+  #preloader-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width .25s; }
+  .bigscore { font-size: clamp(64px, 14vw, 120px); font-weight: 900; letter-spacing: 6px; text-shadow: 5px 5px 0 #000; }
+  .bigscore .me { color: var(--accent2); } .bigscore .foe { color: var(--accent); }
+
+  /* Mobile controls */
+  #mobile-ui { position: fixed; inset: 0; z-index: 15; pointer-events: none; display: none; }
+  body.is-touch #mobile-ui { display: block; }
+  #stick-zone { position: absolute; left: 0; top: 0; width: 45%; height: 100%; pointer-events: auto; }
+  #look-zone { position: absolute; right: 0; top: 0; width: 55%; height: 100%; pointer-events: auto; }
+  #stick-base { position: absolute; width: 120px; height: 120px; border: 3px solid #fff5; border-radius: 50%; background: #0004; display: none; }
+  #stick-knob { position: absolute; width: 54px; height: 54px; border-radius: 50%; background: #fff8; left: 33px; top: 33px; }
+  .mbtn { position: absolute; border-radius: 50%; background: #0006; border: 3px solid #fff6; color: #fff; font-family: inherit; font-weight: 900; padding: 0; display: flex; align-items: center; justify-content: center; pointer-events: auto; user-select: none; touch-action: none; }
+  .mbtn:active { background: var(--accent); }
+  #btn-fire { right: calc(24px + var(--safe-right)); bottom: calc(90px + var(--safe-bottom)); width: 96px; height: 96px; font-size: 15px; border-color: var(--accent); }
+  #btn-jump { right: calc(256px + var(--safe-right)); bottom: calc(32px + var(--safe-bottom)); width: 68px; height: 68px; font-size: 13px; }
+  #btn-reload { right: calc(30px + var(--safe-right)); bottom: calc(200px + var(--safe-bottom)); width: 62px; height: 62px; font-size: 13px; }
+  #btn-reload.pending { border-color: var(--accent2); color: var(--accent2); }
+  #btn-aim { right: calc(30px + var(--safe-right)); bottom: calc(278px + var(--safe-bottom)); width: 62px; height: 62px; font-size: 13px; }
+  #btn-pause-mobile { right: calc(18px + var(--safe-right)); top: calc(18px + var(--safe-top)); width: 52px; height: 52px; font-size: 22px; }
+  @media (pointer: coarse) and (max-height: 500px) {
+    #btn-fire { right: calc(18px + var(--safe-right)); bottom: calc(80px + var(--safe-bottom)); width: 82px; height: 82px; }
+    #btn-jump { right: calc(246px + var(--safe-right)); bottom: calc(18px + var(--safe-bottom)); width: 58px; height: 58px; font-size: 11px; }
+    #btn-reload { right: calc(20px + var(--safe-right)); bottom: calc(178px + var(--safe-bottom)); width: 52px; height: 52px; font-size: 11px; }
+    #btn-aim { right: calc(20px + var(--safe-right)); bottom: calc(244px + var(--safe-bottom)); width: 52px; height: 52px; font-size: 11px; }
+    #btn-pause-mobile { right: calc(12px + var(--safe-right)); top: calc(10px + var(--safe-top)); width: 42px; height: 42px; font-size: 18px; }
+    #hp-bar { left: calc(12px + var(--safe-left)); bottom: calc(12px + var(--safe-bottom)); width: 160px; }
+    #weapon-block { right: calc(12px + var(--safe-right)); bottom: calc(8px + var(--safe-bottom)); }
+    #weapon-label { font-size: 15px; }
+    #ammo { font-size: 30px; }
+  }
+</style>
+<script type="importmap">
+{
+  "imports": {
+    "three": "./vendor/three.module.js",
+    "three/addons/": "./vendor/addons/",
+    "lz-string": "./vendor/lz-string.js"
+  }
+}
+</script>
+</head>
+<body>
+<!-- прелоадер: виден сразу, до загрузки модулей; прячет game.js после boot -->
+<div id="preloader">
+  <img class="logo" src="assets/ui/logo-trim.webp" alt="Ghostfire" width="1024" height="281">
+  <div id="preloader-bar"><div id="preloader-fill"></div></div>
+</div>
+<canvas id="game-canvas"></canvas>
+<script>function isTextField(t){return t instanceof Element&&t.closest('input,textarea,select,[contenteditable="true"]')}document.addEventListener('contextmenu',e=>{if(!isTextField(e.target))e.preventDefault()});document.addEventListener('selectstart',e=>{if(!isTextField(e.target))e.preventDefault()});document.addEventListener('dragstart',e=>{if(!isTextField(e.target))e.preventDefault()})</script>
+
+<!-- HUD -->
+<div id="hud" class="hidden">
+  <div id="damage-vignette"></div>
+  <div id="crosshair"></div>
+  <div id="scope" class="hidden"><div id="scope-h"></div><div id="scope-v"></div></div>
+  <div id="hitmarker"></div>
+  <div id="hp-bar">
+    <div id="hp-num"><img id="hp-heart" class="icon" src="assets/icons/heart.png" alt=""><span id="hp-value">100</span></div>
+    <div class="frame"><div id="hp-fill" style="width:100%"></div></div>
+  </div>
+  <!-- Правый нижний угол как в CS:GO: силуэт текущей пушки, поверх — патроны. -->
+  <div id="weapon-block">
+    <img id="weapon-silhouette" src="assets/hud/pistol.png" alt="">
+    <div>
+      <!-- Перезарядка стоит НАД названием и всегда занимает своё место:
+           снизу она толкала блок, и название с патронами прыгало. -->
+      <div id="reload-note" class="idle"><span id="reload-text"></span><div id="reload-bar"><div id="reload-fill"></div></div></div>
+      <div id="weapon-readout">
+        <img id="ammo-icon" class="icon" src="assets/icons/ammo.png" alt="">
+        <div>
+          <div id="weapon-label"><span id="weapon-name"></span></div>
+          <div id="ammo"><span id="ammo-cur">0</span><span id="ammo-max">/0</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="score-mini">0 : 0</div>
+  <!-- Счётчик стаи: по призраку на звезду, павшие гаснут. -->
+  <div id="pack-left" class="hidden"></div>
+  <div id="countdown" class="hidden"></div>
+  <div id="round-banner" class="hidden">
+    <img id="banner-zone" alt="">
+    <span id="banner-text"></span>
+    <img id="banner-weapon" alt="">
+  </div>
+  <!-- туториал первого запуска -->
+  <div id="tut-box" class="hidden"><span id="tut-text"></span><button id="tut-close">✕</button></div>
+  <div id="tut-arrow" class="hidden"></div>
+</div>
+
+<!-- Mobile -->
+<div id="mobile-ui">
+  <div id="stick-zone"><div id="stick-base"><div id="stick-knob"></div></div></div>
+  <div id="look-zone"></div>
+  <button type="button" class="mbtn" id="btn-fire" aria-pressed="false" data-i18n="fire" data-i18n-aria-label="fire">FIRE</button>
+  <button type="button" class="mbtn" id="btn-jump" aria-pressed="false" data-i18n="jump" data-i18n-aria-label="jump">JMP</button>
+  <button type="button" class="mbtn" id="btn-reload" data-i18n="reloadShort" data-i18n-aria-label="reload">RLD</button>
+  <button type="button" class="mbtn hidden" id="btn-aim" aria-pressed="false" data-i18n="aimShort" data-i18n-aria-label="aim">ОПТ</button>
+  <button type="button" class="mbtn" id="btn-pause-mobile" data-i18n-aria-label="pause" aria-label="Пауза">Ⅱ</button>
+</div>
+
+<!-- Screens (filled by ui.js) -->
+<div id="screen-menu" class="screen"></div>
+<div id="screen-daily" class="screen hidden"></div>
+<div id="screen-maps" class="screen hidden"></div>
+<div id="screen-ghosts" class="screen hidden"></div>
+<div id="screen-challenge" class="screen hidden"></div>
+<div id="screen-shop" class="screen hidden"></div>
+<div id="screen-howto" class="screen hidden"></div>
+<div id="screen-settings" class="screen hidden"></div>
+<div id="screen-pause" class="screen hidden"></div>
+<div id="screen-round" class="screen hidden"></div>
+<div id="screen-match" class="screen hidden"></div>
+
+<script type="module" src="js/game.js"></script>
+</body>
+</html>

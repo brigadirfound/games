@@ -1,0 +1,681 @@
+[
+  {
+    "slot": "compact",
+    "candidate": "compact",
+    "size": [
+      1.8754824782483512,
+      1.5345176842989579,
+      3.8
+    ],
+    "wheels": 4,
+    "doors": [
+      {
+        "side": -1,
+        "triangles": 550,
+        "hinge": [
+          -0.806457465646791,
+          0.3375938905457707,
+          0.9119999999999999
+        ]
+      },
+      {
+        "side": 1,
+        "triangles": 574,
+        "hinge": [
+          0.806457465646791,
+          0.3375938905457707,
+          0.9119999999999999
+        ]
+      }
+    ],
+    "bytes": 2578100,
+    "file": "assets/models/vehicles/approved/compact.glb"
+  },
+  {
+    "slot": "coupe",
+    "candidate": "coupe",
+    "size": [
+      2.0445907789350715,
+      1.3865103535550911,
+      4.6
+    ],
+    "wheels": 4,
+    "doors": [
+      {
+        "side": -1,
+        "triangles": 343,
+        "hinge": [
+          -0.8791740349420807,
+          0.27730207071101826,
+          1.058
+        ]
+      },
+      {
+        "side": 1,
+        "triangles": 374,
+        "hinge": [
+          0.8791740349420807,
+          0.27730207071101826,
+          1.058
+        ]
+      }
+    ],
+    "bytes": 2457812,
+    "file": "assets/models/vehicles/approved/coupe.glb"
+  },
+  {
+    "slot": "roadster",
+    "candidate": "hatchback",
+    "size": [
+      1.804801580767939,
+      1.4014933552118594,
+      4.1
+    ],
+    "wheels": 4,
+    "doors": [
+      {
+        "side": -1,
+        "triangles": 403,
+        "hinge": [
+          -0.7760646797302138,
+          0.29431360459449046,
+          0.9019999999999999
+        ]
+      },
+      {
+        "side": 1,
+        "triangles": 429,
+        "hinge": [
+          0.7760646797302138,
+          0.29431360459449046,
+          0.9019999999999999
+        ]
+      }
+    ],
+    "bytes": 2513876,
+    "file": "assets/models/vehicles/approved/roadster.glb"
+  },
+  {
+    "slot": "van",
+    "candidate": "minivan",
+    "size": [
+      2.0673419460828377,
+      1.9506124092083765,
+      5.1
+    ],
+    "wheels": 4,
+    "doors": [
+      {
+        "side": -1,
+        "triangles": 378,
+        "hinge": [
+          -0.8889570368156202,
+          0.3901224818416753,
+          1.5299999999999998
+        ]
+      },
+      {
+        "side": 1,
+        "triangles": 408,
+        "hinge": [
+          0.8889570368156202,
+          0.3901224818416753,
+          1.5299999999999998
+        ]
+      }
+    ],
+    "bytes": 2507908,
+    "file": "assets/models/vehicles/approved/van.glb"
+  },
+  {
+    "slot": "muscle",
+    "candidate": "offroad",
+    "size": [
+      2.23892949429386,
+      1.7929611265596628,
+      4.5
+    ],
+    "wheels": 4,
+    "doors": [
+      {
+        "side": -1,
+        "triangles": 310,
+        "hinge": [
+          -0.9627396825463597,
+          0.430310670374319,
+          0.765
+        ]
+      },
+      {
+        "side": 1,
+        "triangles": 332,
+        "hinge": [
+          0.9627396825463597,
+          0.430310670374319,
+          0.765
+        ]
+      }
+    ],
+    "bytes": 2249900,
+    "file": "assets/models/vehicles/approved/muscle.glb"
+  },
+  {
+    "slot": "pickup",
+    "candidate": "pickup",
+    "size": [
+      1.9957388017579902,
+      1.638581255284719,
+      5.0
+    ],
+    "wheels": 4,
+    "doors": [
+      {
+        "side": -1,
+        "triangles": 440,
+        "hinge": [
+          -0.8581676847559357,
+          0.39325950126833253,
+          1.1
+        ]
+      },
+      {
+        "side": 1,
+        "triangles": 466,
+        "hinge": [
+          0.8581676847559357,
+          0.39325950126833253,
+          1.1
+        ]
+      }
+    ],
+    "bytes": 2424280,
+    "file": "assets/models/vehicles/approved/pickup.glb"
+  },
+  {
+    "slot": "sedan",
+    "candidate": "sedan",
+    "size": [
+      2.0488305537987257,
+      1.4163472037754032,
+      4.6000000000000005
+    ],
+    "wheels": 4,
+    "doors": [
+      {
+        "side": -1,
+        "triangles": 476,
+        "hinge": [
+          -0.880997138133452,
+          0.2974329127928347,
+          0.9890000000000001
+        ]
+      },
+      {
+        "side": 1,
+        "triangles": 481,
+        "hinge": [
+          0.880997138133452,
+          0.2974329127928347,
+          0.9890000000000001
+        ]
+      }
+    ],
+    "bytes": 2287476,
+    "file": "assets/models/vehicles/approved/sedan.glb"
+  },
+  {
+    "slot": "sport",
+    "candidate": "sport",
+    "size": [
+      1.8983597120961662,
+      1.1161138788626541,
+      4.2
+    ],
+    "wheels": 4,
+    "doors": [
+      {
+        "side": -1,
+        "triangles": 347,
+        "hinge": [
+          -0.8162946762013514,
+          0.2455450533497839,
+          0.756
+        ]
+      },
+      {
+        "side": 1,
+        "triangles": 374,
+        "hinge": [
+          0.8162946762013514,
+          0.2455450533497839,
+          0.756
+        ]
+      }
+    ],
+    "bytes": 2568532,
+    "file": "assets/models/vehicles/approved/sport.glb"
+  },
+  {
+    "slot": "suv",
+    "candidate": "suv",
+    "size": [
+      2.2419097139328614,
+      1.8793458948230604,
+      5.0
+    ],
+    "wheels": 4,
+    "doors": [
+      {
+        "side": -1,
+        "triangles": 565,
+        "hinge": [
+          -0.9640211769911304,
+          0.4322495558093039,
+          1.1500000000000001
+        ]
+      },
+      {
+        "side": 1,
+        "triangles": 587,
+        "hinge": [
+          0.9640211769911304,
+          0.4322495558093039,
+          1.1500000000000001
+        ]
+      }
+    ],
+    "bytes": 2398616,
+    "file": "assets/models/vehicles/approved/suv.glb"
+  },
+  {
+    "slot": "wagon",
+    "candidate": "wagon",
+    "size": [
+      2.0911617126208504,
+      1.4799721204982101,
+      4.7
+    ],
+    "wheels": 4,
+    "doors": [
+      {
+        "side": -1,
+        "triangles": 421,
+        "hinge": [
+          -0.8991995364269656,
+          0.3107941453046241,
+          0.987
+        ]
+      },
+      {
+        "side": 1,
+        "triangles": 434,
+        "hinge": [
+          0.8991995364269656,
+          0.3107941453046241,
+          0.987
+        ]
+      }
+    ],
+    "bytes": 2286888,
+    "file": "assets/models/vehicles/approved/wagon.glb"
+  },
+  {
+    "slot": "ambul",
+    "candidate": "ambulance",
+    "size": [
+      2.103070574448193,
+      2.090245656049422,
+      5.6
+    ],
+    "wheels": 4,
+    "doors": [
+      {
+        "side": -1,
+        "triangles": 543,
+        "hinge": [
+          -0.9043203470127229,
+          0.3762442180888959,
+          1.876
+        ]
+      },
+      {
+        "side": 1,
+        "triangles": 572,
+        "hinge": [
+          0.9043203470127229,
+          0.3762442180888959,
+          1.876
+        ]
+      }
+    ],
+    "bytes": 3150512,
+    "file": "assets/models/vehicles/approved/ambul.glb"
+  },
+  {
+    "slot": "bus",
+    "candidate": "bus",
+    "size": [
+      2.5479127280811857,
+      2.528330881458251,
+      10.0
+    ],
+    "wheels": 4,
+    "doors": [
+      {
+        "side": -1,
+        "triangles": 756,
+        "hinge": [
+          -1.0956024730749099,
+          0.3033997057749901,
+          4.8
+        ]
+      },
+      {
+        "side": 1,
+        "triangles": 639,
+        "hinge": [
+          1.0956024730749099,
+          0.3033997057749901,
+          4.8
+        ]
+      }
+    ],
+    "bytes": 3180480,
+    "file": "assets/models/vehicles/approved/bus.glb"
+  },
+  {
+    "slot": "fire",
+    "candidate": "fire",
+    "size": [
+      2.4806847806528065,
+      2.8089680212548207,
+      8.0
+    ],
+    "wheels": 4,
+    "doors": [
+      {
+        "side": -1,
+        "triangles": 415,
+        "hinge": [
+          -1.0666944556807068,
+          0.6179729646760606,
+          3.344
+        ]
+      },
+      {
+        "side": 1,
+        "triangles": 464,
+        "hinge": [
+          1.0666944556807068,
+          0.6179729646760606,
+          3.344
+        ]
+      }
+    ],
+    "bytes": 4676652,
+    "file": "assets/models/vehicles/approved/fire.glb"
+  },
+  {
+    "slot": "garbage",
+    "candidate": "garbage",
+    "size": [
+      2.5655229232032215,
+      2.7742825898918424,
+      7.5
+    ],
+    "wheels": 6,
+    "doors": [
+      {
+        "side": -1,
+        "triangles": 450,
+        "hinge": [
+          -1.1031748569773852,
+          0.6380849956751238,
+          3.525
+        ]
+      },
+      {
+        "side": 1,
+        "triangles": 496,
+        "hinge": [
+          1.1031748569773852,
+          0.6380849956751238,
+          3.525
+        ]
+      }
+    ],
+    "bytes": 3728308,
+    "file": "assets/models/vehicles/approved/garbage.glb"
+  },
+  {
+    "slot": "police",
+    "candidate": "police",
+    "size": [
+      1.7778544728151044,
+      1.670522783804945,
+      4.6
+    ],
+    "wheels": 4,
+    "doors": [
+      {
+        "side": -1,
+        "triangles": 692,
+        "hinge": [
+          -0.764477423310495,
+          0.35080978459903844,
+          1.058
+        ]
+      },
+      {
+        "side": 1,
+        "triangles": 720,
+        "hinge": [
+          0.764477423310495,
+          0.35080978459903844,
+          1.058
+        ]
+      }
+    ],
+    "bytes": 3330212,
+    "file": "assets/models/vehicles/approved/police.glb"
+  },
+  {
+    "slot": "truck",
+    "candidate": "truck",
+    "size": [
+      2.753595802286912,
+      2.7031562588812905,
+      6.499999999999999
+    ],
+    "wheels": 4,
+    "doors": [
+      {
+        "side": -1,
+        "triangles": 484,
+        "hinge": [
+          -1.184046194983372,
+          0.5135996891874453,
+          1.4299999999999997
+        ]
+      },
+      {
+        "side": 1,
+        "triangles": 537,
+        "hinge": [
+          1.184046194983372,
+          0.5135996891874453,
+          1.4299999999999997
+        ]
+      }
+    ],
+    "bytes": 3564100,
+    "file": "assets/models/vehicles/approved/truck.glb"
+  },
+  {
+    "slot": "schoolbus",
+    "candidate": "schoolbus",
+    "size": [
+      2.581727443026299,
+      2.700825536231421,
+      8.0
+    ],
+    "wheels": 6,
+    "doors": [
+      {
+        "side": -1,
+        "triangles": 474,
+        "hinge": [
+          -1.1101428005013085,
+          0.2160660428985137,
+          2.56
+        ]
+      },
+      {
+        "side": 1,
+        "triangles": 458,
+        "hinge": [
+          1.1101428005013085,
+          0.2160660428985137,
+          2.56
+        ]
+      }
+    ],
+    "bytes": 3534188,
+    "file": "assets/models/vehicles/approved/schoolbus.glb"
+  },
+  {
+    "slot": "taxi",
+    "candidate": "taxi",
+    "size": [
+      1.8080565770207957,
+      1.360040610869564,
+      4.6
+    ],
+    "wheels": 4,
+    "doors": [
+      {
+        "side": -1,
+        "triangles": 481,
+        "hinge": [
+          -0.7774643281189422,
+          0.2856085282826084,
+          1.058
+        ]
+      },
+      {
+        "side": 1,
+        "triangles": 506,
+        "hinge": [
+          0.7774643281189422,
+          0.2856085282826084,
+          1.058
+        ]
+      }
+    ],
+    "bytes": 3432844,
+    "file": "assets/models/vehicles/approved/taxi.glb"
+  },
+  {
+    "slot": "tow",
+    "candidate": "tow",
+    "size": [
+      2.225397995073202,
+      2.2417236772135904,
+      6.5
+    ],
+    "wheels": 4,
+    "doors": [
+      {
+        "side": -1,
+        "triangles": 421,
+        "hinge": [
+          -0.9569211378814769,
+          0.6276826296198054,
+          3.0549999999999997
+        ]
+      },
+      {
+        "side": 1,
+        "triangles": 461,
+        "hinge": [
+          0.9569211378814769,
+          0.6276826296198054,
+          3.0549999999999997
+        ]
+      }
+    ],
+    "bytes": 4348360,
+    "file": "assets/models/vehicles/approved/tow.glb"
+  },
+  {
+    "slot": "postvan",
+    "candidate": "postvan",
+    "size": [
+      2.087021797739311,
+      1.8880940723924189,
+      5.1
+    ],
+    "wheels": 4,
+    "doors": [
+      {
+        "side": -1,
+        "triangles": 436,
+        "hinge": [
+          -0.8974193730279038,
+          0.41538069592633214,
+          1.428
+        ]
+      },
+      {
+        "side": 1,
+        "triangles": 462,
+        "hinge": [
+          0.8974193730279038,
+          0.41538069592633214,
+          1.428
+        ]
+      }
+    ],
+    "bytes": 2522252,
+    "file": "assets/models/vehicles/approved/postvan.glb"
+  },
+  {
+    "slot": "bike",
+    "candidate": "jawa",
+    "size": [
+      0.7931343818058865,
+      1.1817779019317305,
+      2.2
+    ],
+    "wheels": 2,
+    "doors": [],
+    "bytes": 5576392,
+    "file": "assets/models/vehicles/approved/bike.glb"
+  },
+  {
+    "slot": "scooter",
+    "candidate": "scooter",
+    "size": [
+      0.8821866140101663,
+      1.1666229518235665,
+      1.85
+    ],
+    "wheels": 2,
+    "doors": [],
+    "bytes": 4231076,
+    "file": "assets/models/vehicles/approved/scooter.glb"
+  },
+  {
+    "slot": "tank",
+    "candidate": "tank",
+    "size": [
+      3.7450609758737814,
+      4.062007283083317,
+      9.5
+    ],
+    "wheels": 0,
+    "doors": [],
+    "bytes": 9114420,
+    "file": "assets/models/vehicles/approved/tank.glb"
+  }
+]

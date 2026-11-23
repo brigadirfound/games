@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 fill=%27%23141820%27/%3E%3Ctext x=%2716%27 y=%2723%27 font-size=%2720%27 text-anchor=%27middle%27 fill=%27%23ffcc33%27%3EL%3C/text%3E%3C/svg%3E">
+<title>S.T.A. — Street Trouble Agency</title>
+<link rel="stylesheet" href="./tokens.css?v=1787498500">
+<link rel="stylesheet" href="./src/menuui.css?v=1787498500">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { width:100%; height:100%; overflow:hidden; background:#0a0a0d;
+    font-family:"Segoe UI", Tahoma, system-ui, sans-serif; color:#fff; user-select:none; }
+  #view { position:fixed; inset:0; width:100%; height:100%; display:block; cursor:crosshair; }
+  #hud { position:fixed; inset:0; pointer-events:none; }
+
+  #hud-damage { position:absolute; inset:0; opacity:0; transition:opacity .1s linear;
+    background:radial-gradient(ellipse at center, rgba(255,0,0,0) 35%, rgba(190,0,0,.92) 100%); }
+  #hud-vignette { position:absolute; inset:0; opacity:0; transition:opacity .3s;
+    background:radial-gradient(ellipse at center, rgba(120,0,0,0) 45%, rgba(120,0,0,.85) 100%); }
+
+  #hud-top { position:absolute; top:16px; right:18px; text-align:right;
+    display:flex; flex-direction:column; align-items:flex-end; }
+  #hud-clock { font-size:15px; font-weight:700; letter-spacing:2px; color:var(--text-muted);
+    text-shadow:2px 2px 0 #000; font-family:var(--font-mono);
+    font-variant-numeric:tabular-nums; }
+  #hud-money { font-size:30px; font-weight:800; color:var(--money); line-height:1.05;
+    text-shadow:2px 2px 0 #000; letter-spacing:1px;
+    font-family:var(--font-mono); font-variant-numeric:tabular-nums; }
+  #hud-stars { margin-top:2px; font-size:21px; line-height:1; }
+  .star { color:var(--star-off); text-shadow:1px 1px 0 #000; }
+  .star.on { color:var(--star-on); text-shadow:0 0 6px #ffb300, 1px 1px 0 #000; }
+  #hud-district { font-size:11px; letter-spacing:.14em; color:var(--text-muted);
+    margin-top:4px; text-shadow:1px 1px 0 #000; }
+
+  #hud-left { position:absolute; top:18px; left:18px; display:flex; flex-direction:column; gap:6px; }
+  .bar-wrap { display:flex; align-items:center; gap:8px; }
+  .bar-label { font-size:11px; font-weight:700; letter-spacing:1px; width:46px;
+    color:var(--text); text-shadow:1px 1px 0 #000, 0 0 4px rgba(0,0,0,.9); }
+  .bar { width:180px; height:13px; background:rgba(0,0,0,.55);
+    border:2px solid rgba(255,255,255,.32); border-radius:3px; overflow:hidden; }
+  .bar i { display:block; height:100%; width:100%; background:var(--hp); transition:width var(--t-base); }
+  #armor-wrap .bar i { background:var(--armor); }
+
+  #hud-weapon { position:absolute; top:88px; left:18px; display:flex; align-items:center; gap:10px; }
+  /* Иконка сгенерирована белым силуэтом на прозрачном фоне (assets/icons/weapon_*.png) —
+     тень вместо заливки, чтобы читалась на любом фоне сцены так же, как текст рядом. */
+  #weap-icon { width:40px; height:40px; object-fit:contain;
+    filter:drop-shadow(1px 1px 0 #000) drop-shadow(-1px -1px 0 #000); }
+  #weap-name { font-size:13px; font-weight:700; letter-spacing:2px; opacity:.85;
+    text-shadow:1px 1px 0 #000; }
+  #weap-ammo { font-size:30px; font-weight:800; text-shadow:2px 2px 0 #000; line-height:1; }
+
+  #minimap { position:absolute; left:18px; bottom:18px; width:220px; height:220px;
+    filter:drop-shadow(0 4px 12px rgba(0,0,0,.65)); }
+
+  #hud-speed { position:absolute; right:22px; bottom:22px; text-align:right; display:none; }
+  #speed-val { font-size:48px; font-weight:800; text-shadow:2px 2px 0 #000; }
+  #hud-speed small { display:block; font-size:12px; opacity:.75; letter-spacing:2px; }
+
+  #hud-mission { position:absolute; left:50%; transform:translateX(-50%); top:14px;
+    display:flex; flex-direction:column; gap:6px; align-items:center; max-width:460px; }
+  .mrow { background:var(--hud-panel); padding:8px 16px; border-radius:var(--r-hud); text-align:center;
+    border-left:var(--accent-bar-hud) solid var(--accent); font-size:13.5px; line-height:1.45; }
+  .mrow b { letter-spacing:1.5px; font-size:14.5px; display:block; }
+  .mrow span { opacity:.88; }
+  .mrow i { color:#ff9f43; font-style:normal; font-weight:700; display:block; margin-top:2px; }
+
+  /* Тост поверх геймплея — начало/провал/успех миссии, арест и остальные короткие
+     уведомления (showMessage()). Один компонент на все тона, см. design/out/components/hud/HudToast.jsx.
+     max-width вместо nowrap — длинные строки (список из убежища, название объекта
+     недвижимости) раньше вылезали за экран. */
+  #hud-msg { position:absolute; left:50%; top:32%; transform:translate(-50%,-50%);
+    text-align:center; max-width:640px; display:none; }
+  #hud-msg .msg-eyebrow { font-family:var(--font-display); font-size:12px;
+    letter-spacing:var(--tracking-eyebrow); text-transform:uppercase; color:var(--text-muted);
+    text-shadow:var(--text-shadow-hud-sm); margin-bottom:6px; }
+  #hud-msg .msg-title { font-family:var(--font-display); font-size:26px; font-weight:var(--fw-bold);
+    letter-spacing:.08em; text-transform:uppercase; text-shadow:var(--text-shadow-hud);
+    white-space:pre-line; line-height:1.3; color:var(--text); }
+  #hud-msg .msg-title.tone-fail, #hud-msg .msg-title.tone-arrest { color:var(--danger); }
+  #hud-msg .msg-sub { margin-top:8px; font-family:var(--font-body); font-size:16px;
+    text-shadow:var(--text-shadow-hud-sm); white-space:pre-line; color:var(--text-muted); }
+  #hud-msg .msg-sub.numeric { font-family:var(--font-mono); font-variant-numeric:tabular-nums; }
+  #hud-msg .msg-sub.tone-success { color:var(--money); }
+  #hud-msg .msg-sub.tone-arrest { color:var(--danger); }
+
+  #hud-hint { position:absolute; left:50%; bottom:26px; transform:translateX(-50%);
+    background:rgba(0,0,0,.62); padding:8px 18px; border-radius:20px; font-size:13.5px;
+    display:none; border:1px solid rgba(255,255,255,.15); }
+
+  #hud-crosshair { position:absolute; left:50%; top:50%; width:0; height:0; display:none; }
+  #hud-crosshair .ch { position:absolute; left:0; top:0; background:rgba(255,255,255,.92);
+    box-shadow:0 0 3px rgba(0,0,0,.9); transition:transform .045s linear; }
+  #hud-crosshair .t, #hud-crosshair .b { width:2px; height:8px; margin-left:-1px; }
+  #hud-crosshair .l, #hud-crosshair .r { height:2px; width:8px; margin-top:-1px; }
+  #hud-crosshair .t { transform-origin:center bottom; }
+  #hud-crosshair .dot { width:2px; height:2px; margin:-1px 0 0 -1px; border-radius:50%;
+    background:rgba(255,80,80,.95); }
+
+  #hud-cam { margin-top:6px; font-size:10px; font-weight:800; letter-spacing:2px;
+    color:var(--text-muted); font-family:var(--font-mono);
+    text-shadow:1px 1px 0 #000; opacity:0; transition:opacity var(--t-base); }
+
+  #scope { position:absolute; inset:0; display:none; pointer-events:none;
+    background:radial-gradient(circle at center, transparent 27%, rgba(0,0,0,.93) 29%); }
+  #scope::before, #scope::after { content:''; position:absolute; background:rgba(0,0,0,.8); }
+  #scope::before { left:50%; top:0; width:1.5px; height:100%; }
+  #scope::after { top:50%; left:0; height:1.5px; width:100%; }
+
+  #hud-radio { position:absolute; left:18px; top:150px; background:rgba(0,0,0,.55);
+    padding:5px 14px; border-radius:14px; font-size:12px; font-weight:700;
+    letter-spacing:2px; display:none; border:1px solid rgba(255,255,255,.14); }
+
+  #hud-progress { margin-top:12px; text-align:right; }
+  #prog-pct { font-size:20px; font-weight:800; color:var(--accent);
+    text-shadow:2px 2px 0 #000; line-height:1;
+    font-family:var(--font-mono); font-variant-numeric:tabular-nums; }
+  #prog-sub { font-size:10px; color:var(--text-dim); letter-spacing:.14em; margin-top:3px;
+    text-shadow:1px 1px 0 #000; }
+
+  #credits { position:absolute; inset:0; display:none; align-items:center;
+    justify-content:center; background:linear-gradient(160deg,rgba(8,10,16,.97),rgba(30,18,10,.97));
+    z-index:18; pointer-events:auto; overflow-y:auto; padding:28px; }
+  .credits-inner { text-align:center; max-width:560px; }
+  #credits h1 { font-size:52px; letter-spacing:6px; font-weight:900;
+    background:linear-gradient(180deg,#ffe9a8,#ff9f2e);
+    -webkit-background-clip:text; background-clip:text; color:transparent; }
+  #credits h2 { font-size:13px; letter-spacing:5px; opacity:.6; margin-top:6px; }
+  #credit-stats { margin-top:24px; display:flex; flex-direction:column; gap:6px;
+    font-size:14px; text-align:left; }
+  #credit-stats div { display:flex; justify-content:space-between; gap:20px;
+    border-bottom:1px solid rgba(255,255,255,.09); padding-bottom:5px; }
+  #credit-stats b { color:#ffd84d; }
+  #credit-stats .total { margin-top:10px; border-bottom:none; font-size:17px; }
+  #credit-stats .total b { color:#7CFC8A; font-size:22px; }
+  .credits-note { margin-top:20px; font-size:13px; opacity:.65; line-height:1.7; }
+  #credits-btn { display:inline-block; margin-top:24px; }
+
+  #tutorial { position:absolute; left:50%; bottom:96px; transform:translateX(-50%);
+    background:linear-gradient(180deg, rgba(18,22,30,.94), rgba(10,13,18,.94));
+    border:1px solid rgba(255,204,51,.5); border-left:5px solid #ffcc33;
+    padding:12px 26px; border-radius:9px; text-align:center; display:none;
+    box-shadow:0 8px 30px rgba(0,0,0,.6); min-width:330px; transition:transform .12s; }
+  #tut-step { font-size:10px; letter-spacing:3px; opacity:.5; }
+  #tut-title { font-size:19px; font-weight:800; letter-spacing:2px; color:#ffcc33;
+    margin-top:3px; text-shadow:1px 1px 0 #000; }
+  #tut-text { font-size:14px; margin-top:5px; opacity:.92; line-height:1.5; }
+  #tut-text b { background:rgba(255,255,255,.16); padding:1px 7px; border-radius:4px;
+    font-family:ui-monospace, monospace; font-size:12.5px; }
+  #tut-skip { font-size:10.5px; opacity:.4; margin-top:7px; }
+  #tut-skip b { font-family:ui-monospace, monospace; }
+
+  #tut-arrow { position:absolute; display:none; pointer-events:none; }
+  #tut-arrow i { display:block; width:0; height:0; border-left:13px solid transparent;
+    border-right:13px solid transparent; border-bottom:24px solid #ffcc33;
+    filter:drop-shadow(0 2px 6px rgba(0,0,0,.8)); animation:bob .9s ease-in-out infinite; }
+  #tut-arrow span { position:absolute; left:50%; top:30px; transform:translateX(-50%);
+    white-space:nowrap; font-size:11px; font-weight:700; letter-spacing:1px;
+    background:rgba(0,0,0,.65); padding:2px 8px; border-radius:9px; color:#ffcc33; }
+  @keyframes bob { 0%,100%{ transform:translateY(0);} 50%{ transform:translateY(-7px);} }
+
+  #fps { position:absolute; right:10px; top:2px; font-size:11px; opacity:.35;
+    font-family:ui-monospace, monospace; }
+
+  /* Единственный настоящий блокирующий экран из тройки «загрузка / смерть / арест-и-миссии» —
+     арест и миссии рисует #hud-msg (тост). Тот же принцип, что у паузы: живой замороженный
+     кадр canvas под полупрозрачным чёрным, БЕЗ blur — раньше здесь был backdrop-filter,
+     нарушение раздела «Запрещено». */
+  #gameover .go-stats { font-size:15px; color:var(--text-label); line-height:1.8;
+    font-variant-numeric:tabular-nums; }
+  #gameover .go-stats b { font-family:var(--font-mono); color:var(--text); font-weight:var(--fw-medium); }
+  #gameover .go-stats b.money { color:var(--money); }
+
+  /* #start: контейнер и раскладку задаёт .menu-screen из menuui.css — та же система,
+     что у паузы. #pause и #gameover — так же, разметку рисует JS поверх живого
+     замороженного кадра canvas (game.render() продолжает рисовать сцену, пока игра
+     на паузе, само время внутри игры не идёт). У титульного экрана кадра ещё нет —
+     сцена не рендерилась ни разу, поэтому у него --menu-screen--solid (непрозрачный чёрный). */
+  #start-actions { gap: var(--sp-8); }
+  #start-facts-eyebrow { font-family:var(--font-display); font-size:var(--fs-eyebrow);
+    letter-spacing:var(--tracking-eyebrow); color:var(--text-muted);
+    height:var(--row-h); line-height:var(--row-h); }
+  #loading { margin-top:var(--sp-6); font-family:var(--font-mono); font-size:13px;
+    color:var(--text-dim); letter-spacing:.04em; }
+  /* развёрнутое сообщение об ошибке WebGL */
+  #loading > b { display:block; font-family:var(--font-display); font-size:22px;
+    font-weight:var(--fw-bold); letter-spacing:.08em; text-transform:uppercase;
+    color:var(--text); margin-bottom:var(--sp-3); }
+  #loading .why b { display:inline; font-size:inherit; color:var(--accent); letter-spacing:0; }
+  #loading .why { font-family:var(--font-body); font-size:13px; letter-spacing:0;
+    color:var(--text-label); margin:6px 0; max-width:560px; line-height:var(--lh-text); }
+  #loading .hint { font-size:12px; letter-spacing:0; color:var(--text-muted); }
+  #loading .fix { text-align:left; max-width:560px; margin:var(--sp-4) 0 0;
+    font-family:var(--font-body); font-size:12.5px; letter-spacing:0;
+    line-height:var(--lh-text); color:var(--text-label); }
+  #loading .fix ol { margin:8px 0 0 20px; }
+  #loading .fix li { margin-bottom:7px; }
+  #loading code { background:var(--hud-panel); padding:1px 6px; border-radius:var(--r-hud);
+    font-family:var(--font-mono); font-size:12px; }
+  #retry-btn { margin-top:var(--sp-5); padding:8px 20px; font-family:var(--font-display);
+    font-size:13px; font-weight:var(--fw-medium); letter-spacing:.08em; text-transform:uppercase;
+    cursor:pointer; border:1px solid var(--accent); background:transparent;
+    color:var(--accent); border-radius:0; transition:color var(--t-fast), background var(--t-fast); }
+  #retry-btn:hover { background:var(--accent); color:#11131a; }
+
+  /* ---------- вступительный ролик ---------- */
+  #intro { position:fixed; inset:0; display:none; background:#05060a; z-index:60;
+    overflow:hidden; }
+  #intro-img { position:absolute; inset:-4%; background-size:cover;
+    background-position:center; will-change:transform; }
+  @keyframes introPan0 { from{transform:scale(1.02) translate(0,0);} to{transform:scale(1.14) translate(-2%,-1.5%);} }
+  @keyframes introPan1 { from{transform:scale(1.14) translate(1.5%,1%);} to{transform:scale(1.02) translate(0,0);} }
+  @keyframes introPan2 { from{transform:scale(1.05) translate(-1.5%,1%);} to{transform:scale(1.16) translate(1.5%,-1%);} }
+  #intro-vig { position:absolute; inset:0; pointer-events:none;
+    background:radial-gradient(ellipse at center, rgba(0,0,0,0) 38%, rgba(0,0,0,.92) 100%); }
+  #intro-grain { position:absolute; inset:0; pointer-events:none; opacity:.16;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='.6'/%3E%3C/svg%3E");
+    animation:introGrain .6s steps(2) infinite; }
+  @keyframes introGrain { 0%{transform:translate(0,0);} 50%{transform:translate(-2%,1%);} 100%{transform:translate(1%,-1%);} }
+  #intro-text { position:absolute; left:0; right:0; bottom:9%; padding:0 6%;
+    text-align:left; max-width:1180px; margin:0 auto; }
+  #intro-title { font-size:15px; letter-spacing:8px; font-weight:800; color:var(--accent);
+    text-shadow:2px 2px 0 #000; margin-bottom:12px; }
+  #intro-lines { font-size:21px; line-height:1.6; font-weight:600; white-space:pre-line;
+    text-shadow:2px 2px 0 #000, 0 0 22px rgba(0,0,0,.85); min-height:4.6em; }
+  #intro-lines::after { content:'_'; opacity:.85; animation:introCaret .7s steps(1) infinite; }
+  @keyframes introCaret { 50%{opacity:0;} }
+  #intro-skip { position:absolute; right:26px; bottom:22px; font-size:11px;
+    letter-spacing:3px; opacity:.5; text-shadow:1px 1px 0 #000; }
+  #intro-progress { position:absolute; left:0; right:0; bottom:0; height:3px;
+    background:rgba(255,255,255,.12); }
+  #intro-progress i { display:block; height:100%; width:0; background:var(--accent);
+    box-shadow:0 0 10px var(--accent); }
+  #intro.entering #intro-text, #intro.entering #intro-img { animation-name:introFadeIn; animation-duration:.7s; }
+  @keyframes introFadeIn { from{opacity:0;} to{opacity:1;} }
+  #intro.fading { opacity:0; transition:opacity .7s ease; }
+</style>
+</head>
+<body>
+<canvas id="view"></canvas>
+<div id="hud"></div>
+<div id="fps" style="position:fixed;right:10px;top:2px;font-size:11px;opacity:.35;font-family:ui-monospace,monospace;z-index:5"></div>
+
+<div id="start" class="menu-screen menu-screen--solid menu-screen--open">
+  <div class="menu-header">
+    <div class="menu-eyebrow">STREET TROUBLE AGENCY</div>
+    <div class="menu-title">S.T.A.</div>
+  </div>
+  <!-- Скрыто по умолчанию — main.js:boot() открывает после того, как город
+       сгенерирован (Game() строит сцену синхронно, это и есть «загрузка»). -->
+  <div class="menu-body" id="start-actions" style="display:none">
+    <div style="width:420px">
+      <div class="menu-row menu-row--narrow clickable" id="start-btn">
+        <span class="menu-row__label">НОВАЯ ИГРА</span>
+        <span class="menu-row__value">генерация города</span>
+      </div>
+      <div class="menu-row menu-row--narrow clickable state-disabled" id="load-btn">
+        <span class="menu-row__label">ЗАГРУЗИТЬ СОХРАНЕНИЕ</span>
+        <span class="menu-row__value">liberty-save</span>
+      </div>
+      <div class="menu-row menu-row--narrow clickable" id="open-controls-btn">
+        <span class="menu-row__label">УПРАВЛЕНИЕ</span>
+        <span class="menu-row__value">раскладка клавиш</span>
+      </div>
+      <div class="menu-row menu-row--narrow clickable" id="open-settings-btn">
+        <span class="menu-row__label">НАСТРОЙКИ</span>
+        <span class="menu-row__value">20 опций</span>
+      </div>
+      <div class="menu-note">12 сюжетных миссий в трёх актах с настоящим финалом. После титров
+        город остаётся открытым: 40 спрятанных пакетов, 4 объекта недвижимости с доходом,
+        захват 5 районов, беспредел, 4 подработки, 6 радиостанций, полицейские вертолёты
+        на 4+ звёздах.</div>
+      <p><a href="./transport-credits.html" style="color:#a6cbe3">Авторы моделей транспорта</a></p>
+    </div>
+    <div style="width:260px">
+      <div id="start-facts-eyebrow">ЧТО В ГОРОДЕ</div>
+      <div class="menu-row menu-row--narrow"><span class="menu-row__label">МИССИЙ</span><span class="menu-row__value numeric">12</span></div>
+      <div class="menu-row menu-row--narrow"><span class="menu-row__label">АКТОВ</span><span class="menu-row__value numeric">3</span></div>
+      <div class="menu-row menu-row--narrow"><span class="menu-row__label">РАЙОНОВ</span><span class="menu-row__value numeric">5</span></div>
+      <div class="menu-row menu-row--narrow"><span class="menu-row__label">ПАКЕТОВ</span><span class="menu-row__value numeric">40</span></div>
+      <div class="menu-row menu-row--narrow"><span class="menu-row__label">НЕДВИЖИМОСТЬ</span><span class="menu-row__value numeric">4</span></div>
+      <div class="menu-row menu-row--narrow"><span class="menu-row__label">ОРУЖИЕ</span><span class="menu-row__value numeric">6</span></div>
+      <div class="menu-row menu-row--narrow"><span class="menu-row__label">РАДИОСТАНЦИЙ</span><span class="menu-row__value numeric">6</span></div>
+      <div class="menu-row menu-row--narrow"><span class="menu-row__label">ПОДРАБОТОК</span><span class="menu-row__value numeric">4</span></div>
+    </div>
+  </div>
+  <div id="loading">Генерация города…</div>
+</div>
+
+<div id="pause"></div>
+
+<script type="importmap">
+{ "imports": { "three": "./vendor/three.module.js?v=1787475767" } }
+</script>
+<script type="module" src="./src/main.js?v=20260915-vehicle-pass4"></script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+/* Fixed desktop composition, uniformly fitted to the available viewport. */
+@media(pointer:coarse) and (max-height:500px){#lesson{top:92px;transform:translateX(-50%);font-size:14px;line-height:1.3;padding:6px 10px}}
+@media(pointer:coarse){#touch-controls #stick{width:112px;height:112px;bottom:82px;background:#10171555;opacity:0;transition:opacity .12s}#touch-controls #stick.active{opacity:.58}#touch-controls #stick-knob{left:34px;top:34px;width:40px;height:40px}#touch-controls #pace{left:12px;bottom:10px}#touch-controls #pace button{min-width:60px;min-height:46px;font-size:12px}#touch-controls #look-label{right:132px;bottom:104px}}
+#hud-prompts #story-cue.search-announcement{position:fixed;top:auto;bottom:calc(70vh - 130px);left:50%;transform:translateX(-50%);width:min(660px,80vw);max-width:80vw;font:500 clamp(20px,3vw,30px)/1.3 Oswald,sans-serif}
+#screen-menu{display:block;padding:0;overflow:hidden;background-image:linear-gradient(90deg,#08090ad9,#0d0e10b8),url('assets/ui/menu-empty-v31.png');background-position:center;background-size:cover}
+#screen-menu #menu-layout{position:absolute;left:50%;top:50%;width:1160px;box-sizing:border-box;padding:24px;display:grid;grid-template-columns:360px minmax(0,1fr);gap:52px;align-items:center;transform:translate(-50%,-50%) scale(var(--menu-fit,1));transform-origin:center}
+#screen-menu .menu-sidebar{grid-column:1;grid-row:1;max-width:none;gap:12px;width:100%}
+#screen-menu .menu-main{gap:7px;max-width:none}
+#screen-menu .menu-hero{grid-column:2;grid-row:1;width:100%;max-width:none;gap:24px}
+#screen-menu #menu-logo{width:310px;max-height:310px}
+#screen-menu #menu-sub{font-size:21px;line-height:1.6}
+#screen-menu #menu-goal{font-size:26px;line-height:1.45}
+#screen-menu #btn-play,#screen-menu #btn-free{font-size:21px;padding:9px 16px}
+#screen-menu #settings-row{grid-template-columns:minmax(0,1fr) minmax(0,1.15fr) 44px 44px;gap:8px}
+#screen-menu #settings-row .round{width:44px}
+#screen-menu #settings-row button{box-sizing:border-box;height:44px;min-height:44px;padding:6px;white-space:nowrap;letter-spacing:0;font-size:16px;line-height:1.2}
+#screen-menu .menu-help{padding:14px 16px}
+#screen-menu #btn-opening{display:none!important}
+#pause .row{display:flex;flex-direction:column;align-items:stretch;gap:12px;width:min(330px,100%);margin:0}
+#pause button{width:min(330px,100%);min-width:0;margin:0}
+#pause .row button{width:100%}
+#pause{gap:12px}
+#pause p{margin:0 0 12px}
+@media(max-height:500px){#pause{padding:12px;gap:8px}#pause h2{font-size:28px;margin:0}#pause p{font-size:15px;margin:0;max-width:560px}#pause button{font-size:18px;min-height:38px;padding:6px 12px}#pause .row{gap:8px}}

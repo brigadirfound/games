@@ -1,0 +1,31 @@
+[
+  {
+    "id": "bell",
+    "file": "bell.glb",
+    "parts": {
+      "MainRotor": 616,
+      "TailRotor": 88
+    },
+    "bytes": 1309268,
+    "sha256": "f4e67a8bd6cafe2d271afe6bdab63f5388f4a084b9fcf90dd6d4fc979d97190e"
+  },
+  {
+    "id": "trainer",
+    "file": "trainer.glb",
+    "parts": {
+      "Propeller": 264
+    },
+    "bytes": 849420,
+    "sha256": "4267c39bc776edab66636aa7f950a90c63ffba0fe5bbf8b7112002c436aca300"
+  },
+  {
+    "id": "twin",
+    "file": "twin.glb",
+    "parts": {
+      "Propeller_Right": 366,
+      "Propeller_Left": 366
+    },
+    "bytes": 528316,
+    "sha256": "b5542e8ffaa5026c80d56b0b25607b07ba30997a1698896557d733e067591316"
+  }
+]

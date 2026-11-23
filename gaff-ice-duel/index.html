@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en" data-platform="crazygames">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>БАГОР: Ледяная дуэль</title>
+<!--
+  Тег статичный, а не вставленный скриптом: проверка ищет его именно в разметке,
+  и динамическая вставка читается как «SDK не встроен» (п. 1.1). Локально файл
+  закономерно даёт 404 — раздаёт его только площадка, и это не дефект.
+-->
+
+<style>
+  @font-face {
+    font-family: 'Nunito'; font-style: normal; font-weight: 900; font-display: swap;
+    src: url('assets/fonts/Nunito-Black-cyrillic.woff2') format('woff2');
+    unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+  }
+  @font-face {
+    font-family: 'Nunito'; font-style: normal; font-weight: 900; font-display: swap;
+    src: url('assets/fonts/Nunito-Black-latin.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+2000-206F, U+2122, U+2191, U+2193, U+2212;
+  }
+  /* Заголовочный шрифт: широкий, с прямыми углами — под воксельный мир.
+     Nunito остаётся на текстах, он читаемее в мелком кегле. Russo One идёт
+     одним начертанием (400): ставить ему 900 нельзя, браузер начнёт подделывать
+     жирность и края поплывут. Лицензия SIL OFL, файлы самохостом. */
+  @font-face {
+    font-family: 'Russo One'; font-style: normal; font-weight: 400; font-display: swap;
+    src: url('assets/fonts/RussoOne-cyrillic.woff2') format('woff2');
+    unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+  }
+  @font-face {
+    font-family: 'Russo One'; font-style: normal; font-weight: 400; font-display: swap;
+    src: url('assets/fonts/RussoOne-latin.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+2000-206F, U+2122, U+2191, U+2193, U+2212;
+  }
+
+  :root {
+    --display: 'Russo One', 'Nunito', 'Segoe UI', system-ui, sans-serif;
+    --bg: #0d1620;
+    --surface: #16283a;
+    --surface-soft: #1d3346;
+    --line: #2a4761;
+    --text: #eaf4fb;
+    --muted: #9fb6c6;
+    --accent: #51d0ff;
+    --accent2: #ff7b4a;
+    --reward: #ffd75e;
+    --r: 14px;
+    /* Тени жёсткие и смещённые, а не размытые: воксельный мир — из плотных блоков,
+       мягкое размытие делало интерфейс чужим по отношению к сцене. Цвет тени —
+       затемнённый оттенок фона, не чёрный. */
+    --shadow: #08111a;
+    --drop: 0 5px 0 var(--shadow);
+    --drop-sm: 0 4px 0 var(--shadow);
+    --bevel: inset 0 2px 0 rgba(255, 255, 255, .07);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body, #game-canvas {
+    width: 100%; height: 100%; overflow: hidden;
+    -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+    touch-action: none; overscroll-behavior: none;
+  }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Nunito', 'Segoe UI', system-ui, sans-serif; font-weight: 900;
+  }
+  input, textarea, select, [contenteditable="true"] {
+    -webkit-user-select: text; user-select: text; touch-action: auto;
+  }
+  #game-canvas { position: fixed; inset: 0; display: block; }
+  .hidden { display: none !important; }
+
+  /* ------------------------------------------------------------------- HUD */
+  #hud { position: fixed; inset: 0; z-index: 10; pointer-events: none; }
+
+  #topbar {
+    position: absolute; top: max(10px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%);
+    display: flex; align-items: center; gap: 14px;
+    background: rgba(13, 22, 32, .82); border: 3px solid var(--line); border-radius: 10px;
+    padding: 7px 18px; box-shadow: var(--drop-sm), var(--bevel);
+  }
+  /* табличные цифры: счёт и таймер не дёргаются при смене разряда */
+  #score, #timer { font-variant-numeric: tabular-nums; font-family: var(--display); font-weight: 400; }
+  #score { font-size: 26px; letter-spacing: 3px; }
+  #score .me { color: var(--accent); }
+  #score .foe { color: var(--accent2); }
+  #timer {
+    font-size: 18px; color: var(--muted); min-width: 46px; text-align: center;
+    border-left: 3px solid var(--line); padding-left: 14px;
+  }
+
+  /* Обе полосы наверху навстречу друг другу, счёт между ними — дуэль читается
+     одним взглядом. Раньше полоса игрока висела внизу слева: сравнивать здоровье
+     по диагонали неудобно, а на телефоне она наезжала на зону стика. */
+  .hpwrap { position: absolute; width: min(280px, 27vw); top: max(10px, env(safe-area-inset-top)); }
+  #hp-me-wrap { left: max(14px, env(safe-area-inset-left)); }
+  #hp-foe-wrap { right: max(14px, env(safe-area-inset-right)); }
+  #hp-foe-wrap .label { text-align: right; }
+  #hp-foe i { margin-left: auto; }   /* соперник «убывает» к своему краю */
+  .hpwrap .label { font-size: 13px; color: var(--muted); margin-bottom: 5px; letter-spacing: 2px; }
+  .hpbar {
+    position: relative; height: 22px; background: #0b1219;
+    border: 3px solid var(--line); border-radius: 5px; overflow: hidden;
+    box-shadow: var(--drop-sm), var(--bevel);
+  }
+  /* насечки поперёк полосы — здоровье читается блоками, как и всё остальное */
+  .hpbar::after {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background: repeating-linear-gradient(90deg, transparent 0 21px, rgba(8, 17, 26, .5) 21px 24px);
+  }
+  .hpbar i { display: block; height: 100%; width: 100%; transition: width .14s linear; border-radius: 2px; }
+  #hp-me i { background: linear-gradient(90deg, #2fa8d8, var(--accent)); }
+  #hp-foe i { background: linear-gradient(90deg, #d8542f, var(--accent2)); }
+  /* вспышка полосы в момент урона */
+  @keyframes hurt {
+    0% { border-color: #fff; transform: translateX(-2px); }
+    100% { border-color: var(--line); transform: translateX(0); }
+  }
+  .hpwrap.hurt .hpbar { animation: hurt .22s ease-out; }
+  #hp-foe-wrap.low .hpbar { border-color: var(--reward); box-shadow: 0 0 14px rgba(255, 215, 94, .5); }
+  #hp-foe-wrap.low .label { color: var(--reward); }
+
+  /* Узкий экран: три элемента верхней строки перестают помещаться и наезжают
+     друг на друга — ужимаем полосы и счёт, порядок «полоса · счёт · полоса» важнее размера. */
+  @media (max-width: 560px) {
+    .hpwrap { width: min(150px, 23vw); }
+    .hpwrap .label { font-size: 11px; letter-spacing: 1px; }
+    .hpbar { height: 18px; }
+    #topbar { gap: 9px; padding: 5px 11px; }
+    #score { font-size: 20px; letter-spacing: 2px; }
+    #timer { font-size: 15px; min-width: 34px; padding-left: 9px; }
+  }
+
+  #abilities {
+    position: absolute; right: max(14px, env(safe-area-inset-right)); bottom: max(18px, env(safe-area-inset-bottom));
+    display: flex; gap: 12px; align-items: flex-end; pointer-events: auto;
+  }
+  .ability {
+    position: relative; width: 76px; height: 76px; border-radius: 50%;
+    background: var(--surface); border: 3px solid var(--line);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    color: var(--text); cursor: pointer; touch-action: none;
+    box-shadow: var(--drop), var(--bevel);
+    transition: transform .09s, box-shadow .09s, border-color .12s;
+  }
+  .ability .glyph { font-size: 26px; line-height: 1; }
+  /* размер иконки привязан к font-size — растёт вместе с кнопкой на тач-экранах */
+  .ability .glyph svg { display: block; width: 1.3em; height: 1.3em; fill: currentColor; }
+  body.is-touch .ability .glyph { font-size: 30px; }
+  body.is-touch #ability-hook .glyph { font-size: 36px; }
+  .ability .key { font-size: 11px; color: var(--muted); letter-spacing: 1px; }
+  .ability.ready { border-color: var(--accent); }
+  /* взведённая способность приподнимается, нажатая — вдавливается в тень:
+     кнопка ведёт себя как физический блок, а не как плоское пятно */
+  .ability.armed {
+    border-color: var(--reward); transform: translateY(-3px);
+    box-shadow: 0 8px 0 var(--shadow), 0 0 20px rgba(255, 215, 94, .45), var(--bevel);
+  }
+  .ability:active { transform: translateY(5px); box-shadow: 0 0 0 var(--shadow), var(--bevel); }
+  .ability .cool {
+    position: absolute; inset: -3px; border-radius: 50%; pointer-events: none;
+    background: conic-gradient(rgba(9,15,21,.78) calc(var(--p) * 360deg), transparent 0);
+  }
+  .ability .cdnum { position: absolute; font-size: 20px; color: var(--text); font-variant-numeric: tabular-nums; }
+  body.is-touch .ability { width: 88px; height: 88px; }
+  body.is-touch #ability-hook { width: 104px; height: 104px; }
+  /* На сенсорном экране Q/ПКМ/ЛКМ не являются управлением и только путают. */
+  body.is-touch .ability .key { display: none; }
+
+  #banner {
+    position: absolute; left: 50%; top: 30%; transform: translate(-50%, -50%);
+    font-family: var(--display); font-weight: 400;
+    font-size: clamp(36px, 9vw, 88px); letter-spacing: 3px; text-align: center;
+    text-shadow: 0 6px 0 rgba(0,0,0,.45); opacity: 0; transition: opacity .18s;
+  }
+  #banner.show { opacity: 1; }
+  #banner.accent { color: var(--accent); }
+  #banner.warn { color: var(--accent2); }
+  #banner.reward { color: var(--reward); font-size: clamp(20px, 4vw, 34px); }
+
+  #hint {
+    position: absolute; left: 50%; bottom: max(18px, env(safe-area-inset-bottom)); transform: translateX(-50%);
+    background: rgba(13, 22, 32, .8); border: 2px solid var(--line); border-radius: var(--r);
+    padding: 8px 16px; font-size: 15px; color: var(--muted); max-width: 90vw; text-align: center;
+  }
+
+  /* --------------------------------------------------------- мобильный стик */
+  #mobile-ui { position: fixed; inset: 0; z-index: 12; pointer-events: none; display: none; }
+  body.is-touch #mobile-ui { display: block; }
+  #stick-zone { position: absolute; left: 0; bottom: 0; width: 48%; height: 78%; pointer-events: auto; }
+  #stick-base {
+    position: absolute; width: 132px; height: 132px; border-radius: 50%;
+    border: 3px solid rgba(255,255,255,.28); background: rgba(0,0,0,.22); display: none;
+  }
+  #stick-knob {
+    position: absolute; width: 58px; height: 58px; border-radius: 50%;
+    background: rgba(255,255,255,.55); left: 37px; top: 37px;
+  }
+
+  /* ------------------------------------------------------------------ экраны */
+  .screen {
+    position: fixed; inset: 0; z-index: 20; display: flex; flex-direction: column;
+    align-items: center; gap: 14px; padding: 22px 16px;
+    background: rgba(10, 18, 26, .94); overflow-y: auto; touch-action: pan-y; overscroll-behavior: contain;
+  }
+  .screen > :first-child { margin-top: auto; }
+  .screen > :last-child { margin-bottom: auto; }
+  #screen-menu { background: linear-gradient(rgba(10,18,26,.28), rgba(10,18,26,.86)), url('assets/menu_bg.jpg') center / cover; }
+  .emblem {
+    width: clamp(88px, 17vw, 150px); height: auto; display: block;
+    margin-bottom: -6px; filter: drop-shadow(0 6px 0 rgba(0, 0, 0, .38));
+  }
+  .logo {
+    font-family: var(--display); font-weight: 400;
+    font-size: clamp(40px, 11vw, 92px); letter-spacing: 2px; color: var(--accent);
+    text-shadow: 0 6px 0 var(--shadow), 0 9px 0 rgba(0, 0, 0, .45);
+    line-height: .96;
+  }
+  .logo b { color: var(--text); font-size: .38em; display: block; letter-spacing: 7px; margin-top: 4px; font-weight: 400; }
+  h2 { font-family: var(--display); font-weight: 400; font-size: clamp(22px, 5vw, 32px); letter-spacing: 1px; }
+  .sub { color: var(--muted); font-size: 15px; text-align: center; max-width: 460px; line-height: 1.45; }
+  /* подзаголовок раздела в магазине: слот бойца и слот багра */
+  .sub.section {
+    font-family: var(--display); font-weight: 400; color: var(--accent);
+    letter-spacing: 3px; font-size: 14px; width: min(420px, 92vw);
+    text-align: left; margin-top: 6px; border-bottom: 2px solid var(--line); padding-bottom: 5px;
+  }
+
+  .btn {
+    min-width: 260px; min-height: 52px; padding: 13px 24px; font: inherit; font-size: 19px;
+    color: var(--text); background: var(--surface); border: 3px solid var(--line);
+    border-radius: var(--r); cursor: pointer;
+    box-shadow: var(--drop), var(--bevel);
+    transition: transform .09s, box-shadow .09s, border-color .12s, background .12s;
+  }
+  .btn:hover { border-color: var(--accent); background: var(--surface-soft); }
+  /* нажатие «вдавливает» кнопку в её же тень — ощущение физической клавиши */
+  .btn:active { transform: translateY(5px); box-shadow: 0 0 0 var(--shadow), var(--bevel); }
+  .btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+  .btn.primary { background: linear-gradient(180deg, #2f9ec4, #1d6f92); border-color: var(--accent); }
+  .btn.reward { border-color: var(--reward); color: var(--reward); }
+  .btn.ghost { min-width: 160px; font-size: 16px; min-height: 48px; }
+  .btn:disabled { opacity: .45; cursor: default; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+
+  .card {
+    width: min(420px, 92vw); background: var(--surface); border: 3px solid var(--line);
+    border-radius: var(--r); padding: 12px 16px; text-align: left;
+    box-shadow: var(--drop-sm), var(--bevel);
+    transition: transform .09s, box-shadow .09s, border-color .12s;
+  }
+  .card.pick { cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 10px; min-height: 56px; }
+  .card.pick:hover, .card.pick.sel { border-color: var(--accent); }
+  .card.pick:hover { transform: translateY(-2px); box-shadow: 0 7px 0 var(--shadow), var(--bevel); }
+  .card.pick:active { transform: translateY(4px); box-shadow: 0 0 0 var(--shadow), var(--bevel); }
+  /* строки-«читалки» (таблица лидеров, испытание дня) верстаются как pick ради
+     раскладки, но не кликабельны — отклик на наведение им не положен */
+  .card.static, .card.static:hover, .card.static:active {
+    cursor: default; transform: none; box-shadow: var(--drop-sm), var(--bevel);
+  }
+  .card.static:hover { border-color: var(--line); }
+  .card.static.me, .card.static.me:hover { border-color: var(--accent); }
+  .coins, .rank, .stars { font-variant-numeric: tabular-nums; }
+  /* соперник на экране результата: портрет + имя и счёт */
+  .foecard { display: flex; align-items: center; gap: 12px; }
+  .foecard .portrait {
+    width: 64px; height: 64px; border: 3px solid var(--line); border-radius: 10px;
+    display: block; object-fit: cover; box-shadow: var(--drop-sm);
+  }
+  .foecard .name { font-family: var(--display); font-weight: 400; font-size: 19px; }
+  .foecard .desc { font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+  .card .portrait {
+    flex: 0 0 auto; width: 54px; height: 54px; display: block;
+    border: 2px solid var(--line); border-radius: 8px; object-fit: cover;
+  }
+  .card.pick:hover .portrait, .card.pick.sel .portrait { border-color: var(--accent); }
+  .card .who { flex: 1 1 auto; min-width: 0; }
+  .card .name { font-size: 18px; }
+  .card .desc { font-size: 13px; color: var(--muted); font-weight: 700; }
+  .stars { color: var(--reward); letter-spacing: 2px; }
+  /* строка самого игрока в таблице лидеров */
+  .card.me { border-color: var(--accent); }
+  .card .rank { color: var(--muted); font-weight: 700; min-width: 34px; }
+  .card.me .rank, .card.me .name { color: var(--accent); }
+  /* ползунки «своего цвета»: дорожка радужная — видно, какой тон выбираешь */
+  .card.hues { display: grid; gap: 9px; }
+  .huerow { display: flex; align-items: center; gap: 12px; font-size: 14px; color: var(--muted); }
+  .huerow span { min-width: 74px; }
+  .huerow input[type="range"] {
+    flex: 1 1 auto; height: 26px; margin: 0; background: none; touch-action: none;
+    -webkit-appearance: none; appearance: none; cursor: pointer;
+  }
+  .huerow input[type="range"]::-webkit-slider-runnable-track {
+    height: 12px; border-radius: 3px; border: 2px solid var(--line);
+    background: linear-gradient(90deg, #ff5252, #ffd75e, #6bff8f, #51d0ff, #7b6bff, #ff5fd2, #ff5252);
+  }
+  .huerow input[type="range"]::-moz-range-track {
+    height: 12px; border-radius: 3px; border: 2px solid var(--line);
+    background: linear-gradient(90deg, #ff5252, #ffd75e, #6bff8f, #51d0ff, #7b6bff, #ff5fd2, #ff5252);
+  }
+  .huerow input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none; width: 18px; height: 22px; margin-top: -7px;
+    background: var(--text); border: 3px solid var(--shadow); border-radius: 4px;
+  }
+  .huerow input[type="range"]::-moz-range-thumb {
+    width: 14px; height: 20px; background: var(--text);
+    border: 3px solid var(--shadow); border-radius: 4px;
+  }
+
+  .coins { color: var(--reward); }
+  /* монета наследует цвет подписи, сердцевина чуть темнее — читается как чеканка */
+  .coin-i { width: 1em; height: 1em; vertical-align: -.12em; fill: currentColor; }
+  .coin-i .coin-face { fill: rgba(0, 0, 0, .34); }
+  /* превью скина рисуется движком на прозрачном фоне — подложка своя */
+  .card .portrait.skin { background: linear-gradient(180deg, #1d3346, #12212f); object-fit: contain; }
+  .rowline { display: flex; justify-content: space-between; padding: 5px 0; font-size: 15px; }
+  .rowline.total { border-top: 2px solid var(--line); margin-top: 6px; padding-top: 8px; }
+
+  #toast {
+    position: fixed; left: 50%; bottom: 12%; transform: translateX(-50%);
+    background: var(--surface); border: 2px solid var(--accent); border-radius: var(--r);
+    padding: 10px 20px; font-size: 16px; z-index: 40; opacity: 0; transition: opacity .22s;
+    pointer-events: none; max-width: 90vw; text-align: center;
+  }
+  #toast.show { opacity: 1; }
+
+  #preloader {
+    position: fixed; inset: 0; z-index: 100; background: var(--bg);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px;
+    transition: opacity .3s;
+  }
+  #preloader.done { opacity: 0; pointer-events: none; }
+  #pre-bar { width: min(300px, 70vw); height: 12px; background: var(--surface); border: 2px solid var(--line); border-radius: 8px; overflow: hidden; }
+  #pre-fill { height: 100%; width: 8%; background: linear-gradient(90deg, var(--accent), var(--reward)); transition: width .3s; }
+</style>
+<style>
+  #training-guide { position:fixed; z-index:25; top:76px; left:50%; transform:translateX(-50%); width:min(550px,80vw); padding:10px 16px; border:1px solid #64cee6; border-radius:12px; background:#102735ee; color:#eefaff; text-align:center; font-size:16px; pointer-events:none; }
+  #training-guide[hidden] { display:none; }
+  .btn:disabled { opacity:.65; cursor:wait; }
+  #game-canvas, #hud, #mobile-ui, .screen { width:min(100vw,200vh); left:0; right:0; margin-left:auto; margin-right:auto; }
+  #pause-button { position:absolute; top:64px; left:12px; width:48px; height:48px; border:1px solid #64cee6; border-radius:10px; color:white; background:#132936e8; font-size:22px; pointer-events:auto; }
+  @media(max-height:500px) { #training-guide { top:62px; font-size:13px; padding:6px 10px; } }
+</style>
+<script type="importmap">
+{
+  "imports": {
+    "three": "./vendor/three.module.js",
+    "three/addons/": "./vendor/addons/",
+    "lz-string": "./vendor/lz-string.js"
+  }
+}
+</script>
+</head>
+<body>
+<div id="preloader">
+  <div class="logo">БАГОР<b>ЛЕДЯНАЯ ДУЭЛЬ</b></div>
+  <div id="pre-bar"><div id="pre-fill"></div></div>
+</div>
+
+<canvas id="game-canvas"></canvas>
+<script>
+  // п. 1.6.2.7: ни выделения текста, ни браузерного контекстного меню — кроме полей ввода
+  function isTextField(t) {
+    return t instanceof Element && t.closest('input,textarea,select,[contenteditable="true"]');
+  }
+  document.addEventListener('contextmenu', (e) => { if (!isTextField(e.target)) e.preventDefault(); });
+  document.addEventListener('selectstart', (e) => { if (!isTextField(e.target)) e.preventDefault(); });
+  document.addEventListener('dragstart', (e) => { if (!isTextField(e.target)) e.preventDefault(); });
+</script>
+
+<div id="hud" class="hidden">
+  <button id="pause-button" aria-label="ПАУЗА">Ⅱ</button>
+  <div id="topbar">
+    <div id="score"><span class="me">0</span> : <span class="foe">0</span></div>
+    <div id="timer">60</div>
+  </div>
+
+  <div class="hpwrap" id="hp-me-wrap">
+    <div class="label" id="hp-me-label">ВЫ</div>
+    <div class="hpbar" id="hp-me"><i></i></div>
+  </div>
+  <div class="hpwrap" id="hp-foe-wrap">
+    <div class="label" id="hp-foe-label">СОПЕРНИК</div>
+    <div class="hpbar" id="hp-foe"><i></i></div>
+  </div>
+
+  <div id="abilities">
+    <!-- Иконки блочные, под воксельный стиль игры: рисуются inline-SVG, без файлов
+         и без шрифтовых глифов (юникод в разных системах выглядел по-разному). -->
+    <div class="ability" id="ability-trap"><span class="glyph"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="10" y="10" width="4" height="4"/><rect x="10" y="2" width="4" height="6"/><rect x="10" y="16" width="4" height="6"/><rect x="2" y="10" width="6" height="4"/><rect x="16" y="10" width="6" height="4"/><rect x="5" y="5" width="3" height="3"/><rect x="16" y="5" width="3" height="3"/><rect x="5" y="16" width="3" height="3"/><rect x="16" y="16" width="3" height="3"/></svg></span><span class="key" id="key-trap">Q</span><span class="cool" style="--p:0"></span><span class="cdnum"></span></div>
+    <div class="ability" id="ability-dash"><span class="glyph"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="10" width="11" height="4"/><rect x="13" y="5" width="3" height="14"/><rect x="16" y="8" width="3" height="8"/><rect x="19" y="10" width="3" height="4"/></svg></span><span class="key" id="key-dash">ПКМ</span><span class="cool" style="--p:0"></span><span class="cdnum"></span></div>
+    <div class="ability" id="ability-hook"><span class="glyph"><svg viewBox="0 0 24 24" aria-hidden="true"><g transform="rotate(-25 12 12)"><rect x="14" y="2" width="4" height="12"/><rect x="7" y="14" width="11" height="4"/><rect x="7" y="9" width="4" height="5"/><rect x="8" y="6" width="2" height="3"/></g></svg></span><span class="key" id="key-hook">ЛКМ</span><span class="cool" style="--p:0"></span><span class="cdnum"></span></div>
+  </div>
+
+  <div id="banner"></div>
+  <div id="hint" class="hidden"></div>
+</div>
+
+<div id="mobile-ui">
+  <div id="stick-zone"><div id="stick-base"><div id="stick-knob"></div></div></div>
+</div>
+
+<div id="screen-menu" class="screen hidden"></div>
+<div id="screen-levels" class="screen hidden"></div>
+<div id="screen-shop" class="screen hidden"></div>
+<div id="screen-settings" class="screen hidden"></div>
+<div id="screen-howto" class="screen hidden"></div>
+<div id="screen-pause" class="screen hidden"></div>
+<div id="screen-round" class="screen hidden"></div>
+<div id="screen-match" class="screen hidden"></div>
+<div id="screen-leaders" class="screen hidden"></div>
+<div id="toast"></div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

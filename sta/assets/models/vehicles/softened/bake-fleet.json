@@ -1,0 +1,133 @@
+{
+  "blender": "4.2.0",
+  "models": [
+    {
+      "slot": "sedan",
+      "source": "assets/models/vehicles/sedan.glb",
+      "output": "assets/models/vehicles/softened/sedan.glb",
+      "sourceTriangles": 2954,
+      "outputTriangles": 21396,
+      "bytes": 479016
+    },
+    {
+      "slot": "coupe",
+      "source": "assets/models/vehicles/coupe.glb",
+      "output": "assets/models/vehicles/softened/coupe.glb",
+      "sourceTriangles": 3124,
+      "outputTriangles": 22772,
+      "bytes": 513180
+    },
+    {
+      "slot": "suv",
+      "source": "assets/models/vehicles/suv.glb",
+      "output": "assets/models/vehicles/softened/suv.glb",
+      "sourceTriangles": 3294,
+      "outputTriangles": 24235,
+      "bytes": 543360
+    },
+    {
+      "slot": "taxi",
+      "source": "assets/models/vehicles/taxi.glb",
+      "output": "assets/models/vehicles/softened/taxi.glb",
+      "sourceTriangles": 3278,
+      "outputTriangles": 25288,
+      "bytes": 556432
+    },
+    {
+      "slot": "pickup",
+      "source": "assets/models/vehicles/pickup.glb",
+      "output": "assets/models/vehicles/softened/pickup.glb",
+      "sourceTriangles": 6432,
+      "outputTriangles": 28740,
+      "bytes": 787280
+    },
+    {
+      "slot": "sport",
+      "source": "assets/models/vehicles/sport.glb",
+      "output": "assets/models/vehicles/softened/sport.glb",
+      "sourceTriangles": 3148,
+      "outputTriangles": 23232,
+      "bytes": 516120
+    },
+    {
+      "slot": "muscle",
+      "source": "assets/models/vehicles/muscle.glb",
+      "output": "assets/models/vehicles/softened/muscle.glb",
+      "sourceTriangles": 3066,
+      "outputTriangles": 21897,
+      "bytes": 491936
+    },
+    {
+      "slot": "roadster",
+      "source": "assets/models/vehicles/roadster.glb",
+      "output": "assets/models/vehicles/softened/roadster.glb",
+      "sourceTriangles": 5802,
+      "outputTriangles": 32328,
+      "bytes": 873848
+    },
+    {
+      "slot": "truck",
+      "source": "assets/models/vehicles/truck.glb",
+      "output": "assets/models/vehicles/softened/truck.glb",
+      "sourceTriangles": 7474,
+      "outputTriangles": 37940,
+      "bytes": 1019672
+    },
+    {
+      "slot": "police",
+      "source": "assets/models/vehicles/police.glb",
+      "output": "assets/models/vehicles/softened/police.glb",
+      "sourceTriangles": 3232,
+      "outputTriangles": 23518,
+      "bytes": 527448
+    },
+    {
+      "slot": "van",
+      "source": "assets/models/vehicles/van.glb",
+      "output": "assets/models/vehicles/softened/van.glb",
+      "sourceTriangles": 3824,
+      "outputTriangles": 27872,
+      "bytes": 567528
+    },
+    {
+      "slot": "ambul",
+      "source": "assets/models/vehicles/ambul.glb",
+      "output": "assets/models/vehicles/softened/ambul.glb",
+      "sourceTriangles": 2750,
+      "outputTriangles": 25986,
+      "bytes": 532232
+    },
+    {
+      "slot": "bus",
+      "source": "assets/models/vehicles/bus.glb",
+      "output": "assets/models/vehicles/softened/bus.glb",
+      "sourceTriangles": 2142,
+      "outputTriangles": 16690,
+      "bytes": 365364
+    },
+    {
+      "slot": "bike",
+      "source": "assets/models/vehicles/bike.glb",
+      "output": "assets/models/vehicles/softened/bike.glb",
+      "sourceTriangles": 2092,
+      "outputTriangles": 22702,
+      "bytes": 477824
+    },
+    {
+      "slot": "scooter",
+      "source": "assets/models/vehicles/scooter.glb",
+      "output": "assets/models/vehicles/softened/scooter.glb",
+      "sourceTriangles": 1665,
+      "outputTriangles": 15829,
+      "bytes": 334340
+    },
+    {
+      "slot": "fire",
+      "source": "assets/models/vehicles/fire.glb",
+      "output": "assets/models/vehicles/softened/fire.glb",
+      "sourceTriangles": 2120,
+      "outputTriangles": 30808,
+      "bytes": 1119416
+    }
+  ]
+}

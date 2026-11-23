@@ -1,0 +1,13 @@
+{
+  "id": "city01",
+  "name": "Первый город",
+  "nameEn": "First city",
+  "ui": { "background": "#101b31", "panel": "#1c2d4d", "accent": "#ffd45c", "text": "#f5fbff", "muted": "#a9bdd8" },
+  "cities": [
+    { "name": "Старый квартал", "nameEn": "Old Quarter", "road": "#343b4a", "roadEdge": "#72839b", "grass": "#193d43", "lane": "#f9df83", "glow": "#35d2c7" },
+    { "name": "Неоновая набережная", "nameEn": "Neon Waterfront", "road": "#4d3445", "roadEdge": "#a9789a", "grass": "#402348", "lane": "#ffd28a", "glow": "#ff7bb0" },
+    { "name": "Северный порт", "nameEn": "North Harbor", "road": "#263f50", "roadEdge": "#6fa7bd", "grass": "#123a4e", "lane": "#bdeeff", "glow": "#78d5ff" },
+    { "name": "Садовый район", "nameEn": "Garden District", "road": "#4c3b28", "roadEdge": "#b59467", "grass": "#405124", "lane": "#fff1a4", "glow": "#b5ec64" }
+  ],
+  "carColors": ["#65d6ff", "#7d8cff", "#ae79ff", "#ff78aa", "#ff8c55", "#ffd15c", "#b6e866", "#54e1aa", "#48c5ca", "#4b8fff"]
+}

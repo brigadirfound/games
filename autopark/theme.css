@@ -1,0 +1,34 @@
+/* Warm workshop palette; all interactive text stays dark on light surfaces. */
+:root{color-scheme:light;--gold:#986019;--mint:#236a50;--ink:#354335;--line:#46634230}
+html,body{background:#edf2dd}
+#game-root{background:radial-gradient(ellipse at 8% 5%,#ffe7b9 0,transparent 55%),linear-gradient(135deg,#f4f0dd,#dfebd2)}
+#ui{color:#354335}
+button{color:#354335;background:linear-gradient(#fffbeb,#f4e8c9);border-color:#baa98180;box-shadow:0 3px 0 #7084583d}
+button:active{box-shadow:0 1px 0 #7084583d}
+button:hover{filter:brightness(1.04)}
+.primary,.controls .primary{background:linear-gradient(#ffc76b,#f7aa4f);color:#55351c;border-color:#ffd993}
+.secondary{background:linear-gradient(#f9fbe9,#e7eed7);color:#41563d}
+.hud{background:#fffcf0ef;border-color:#bdc7a9;box-shadow:0 4px 12px #76865716}
+.money-value{color:#986019}.rate{color:#357348}.city-count{color:#6a7e59}
+.order{background:#fff5d9;color:#72552b;border-color:#d9c08e}.order-reward{color:#9a6319}.order.ready{background:#d8edb7;color:#315334;border-color:#82b16a}.order-progress{background:#82b562}
+.objective{color:#6c6539}.parking-column{background:#f6f8e9ee;border-color:#b2c2a0;box-shadow:0 4px 14px #647b4d18}.parking-heading{color:#526847}
+.track-area{background:#d5e4c255;border-color:#aabd90;box-shadow:inset 0 0 20px #88a66b12}.fleet-count{color:#566f48}
+.park-slot{background:linear-gradient(#fcfaea,#e8efd9);border:1px solid #acbf99;box-shadow:inset 0 -3px 0 #cad6b875,0 2px 0 #a2b58f22}
+/* Absolute image bounds eliminate intrinsic grid sizing and reserve badge clearance. */
+.park-slot img{position:absolute;inset:auto;left:50%;top:50%;transform:translate(-50%,-50%);width:calc(100% - 12px);height:calc(100% - 6px);max-width:144px;max-height:144px;object-fit:contain;pointer-events:none}
+.level{background:#faf6e7;color:#59744e;border:1px solid #bccda6;box-shadow:0 1px 3px #76855720;z-index:1}
+.empty-mark{color:#94ac7866}.mergeable{border-color:#d4a34f;box-shadow:inset 0 0 0 1px #e9bc7160}.rare{box-shadow:inset 0 0 0 2px #e4b343}
+.park-slot[data-tier="1"]{background:linear-gradient(#e2f1ee,#c5dfd8)}.park-slot[data-tier="2"]{background:linear-gradient(#efe6f7,#ddd0ee)}.park-slot[data-tier="3"]{background:linear-gradient(#fce7dd,#edc6b9)}.park-slot[data-tier="4"]{background:linear-gradient(#ecf2c4,#d0df9b)}
+.park-slot.selected{outline-color:#478964;background:#d3e9c4}.rearranging .park-slot{border-style:dashed}.drop-target{outline:3px solid #468463;outline-offset:-3px;background:#c8e4b9!important}.drop-merge{outline-color:#d69b30;background:#f8e7b4!important}.drag-over{outline:3px solid #5a9561;outline-offset:-3px}
+.send-button,.compact-send{background:linear-gradient(#badc99,#98c675);color:#314d2b;border-color:#8ab367}.has-selection{border-color:#548d50;box-shadow:inset 0 0 0 1px #7cab6d}
+.rewards button{background:#f7dfc0;color:#81532c;border-color:#d2b68c}.upgrade-ready{background:linear-gradient(#d0e8b6,#b5d894);color:#385831;border-color:#88b16a}.compact-more.upgrade-ready{box-shadow:inset 0 0 0 1px #6c9e4880,0 3px 0 #7084583d}
+.veil{background:#43564188;backdrop-filter:blur(8px)}.dialog{background:linear-gradient(145deg,#fffcef,#edf3db);border-color:#c3c9a5;box-shadow:0 16px 50px #415c3f44;color:#354335}
+.dialog-header{background:#f7f9e7}.help{color:#60714f}.warning{background:#edc98130;color:#856337}.eyebrow{color:#5b8a48}.reward-number,.start-dialog h1{color:#936326}
+.collection-car{background:#f8f9e9;border-color:#b6c6a0}.collection-car.rare{background:#f9e9bd}.locked{color:#8fa97d}.achievement-grid p{background:#e5edd7;color:#697b57}.achievement-grid .complete{background:#d2e6bd;color:#3d733c}
+.collection-milestone{background:#fdf0ce;border-color:#d6c49a}.collection-milestone strong{color:#91601e}.collection-milestone span{color:#67814d}
+.toast{background:#fff7dfed;border-color:#b4bb8e;color:#5f613a;box-shadow:0 5px 16px #5e6f3b28}.boot-label{color:#936326}
+.event-badge{background:#fff9dfed;border-color:#becea0;color:#5b7442}.rush-active{border-color:#dcb55c;box-shadow:inset 0 0 30px #e0c77925,0 0 18px #b3bb6624}.rush-active .event-badge{background:#fff0ad;color:#6e5428;border-color:#ebc869}.chain-badge{background:#ffedb7ee;border-color:#cfad61;color:#795624}
+.district-card strong{color:#fff6d9}.district-card span{color:#f3ffe5}
+.arrange-button[aria-pressed="true"]{background:#d0e6b9;border-color:#78a855}.arrange-button{font-size:13px!important}
+.drag-ghost{filter:drop-shadow(0 6px 7px #35533060)}
+.buy:not(.affordable){background:linear-gradient(#f6eddb,#e4d7bb);color:#937c59}.send-button:disabled,.compact-send:disabled{background:#e1e8d2;color:#849473;opacity:1;border-color:#bccaaa}

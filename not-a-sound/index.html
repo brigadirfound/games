@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Ни звука</title>
+<!--
+  SDK площадки. Тег обычный и стоит в <head> до кода игры — так требует
+  документация, и порядок здесь важен: инициализация асинхронная, а модули
+  рекламы и данных до неё не существуют.
+
+  Адрес внешний, и это единственное исключение из правила «никаких внешних
+  ресурсов»: SDK обязан приходить с домена площадки, иначе она не увидит игру
+  своей. Локально скрипт не загрузится, window.CrazyGames останется пустым, и
+  платформенный слой честно уйдёт в местное поведение — игра работает и без
+  площадки.
+-->
+<script src="https://sdk.crazygames.com/crazygames-sdk-v3.js"></script>
+<style>
+  /*
+    Подавление браузерных жестов — требование п. 1.6.2.7. Без него долгое
+    нажатие открывает контекстное меню поверх игры, а протяжка выделяет
+    интерфейс. Исключение для полей ввода обязательно.
+  */
+  html, body {
+    margin: 0; padding: 0; height: 100%; overflow: hidden;
+    background: #04060c; color: #cfe0ea;
+    font-family: system-ui, sans-serif;
+    -webkit-user-select: none; -moz-user-select: none; user-select: none;
+    -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
+    touch-action: none; overscroll-behavior: none;
+  }
+  input, textarea, select { -webkit-user-select: text; user-select: text; }
+
+  canvas { display: block; width: 100%; height: 100%; }
+
+  .screen {
+    position: fixed; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 16px;
+    background: rgba(4, 6, 12, .86); z-index: 20; padding: 28px; text-align: center;
+  }
+  .screen.hidden, #hud.hidden, #hud-top.hidden, #hud-state.hidden,
+  button.hidden { display: none; }
+
+  /*
+    Фон меню — кадр от первого лица. Затемнение сверху обязательно: без него
+    заголовок тонет в светлом пятне фонаря. Виньетка поверх фона дожимает
+    края, чтобы кадр не выглядел наклеенной картинкой в прямоугольнике.
+  */
+  #screen-menu {
+    background:
+      radial-gradient(ellipse at 50% 45%, rgba(4, 6, 12, .14), rgba(4, 6, 12, .8) 78%),
+      url('assets/ui/menu-bg.jpg') center / cover no-repeat;
+  }
+  /* Отдельный вертикальный кадр для телефона. Широкий по `cover` обрезается по
+     бокам до середины коридора, и от композиции не остаётся ничего. */
+  @media (orientation: portrait) {
+    #screen-menu { background-image:
+      radial-gradient(ellipse at 50% 45%, rgba(4, 6, 12, .14), rgba(4, 6, 12, .8) 78%),
+      url('assets/ui/menu-bg-portrait.jpg'); }
+  }
+
+  .brand { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 6px; }
+  #menu-logo {
+    /* Ограничение и по ширине, и по высоте. Только по ширине логотип съедал
+       треть экрана на горизонтальном телефоне, и нижний ряд кнопок уезжал за
+       край — меню переставало помещаться целиком. */
+    display: block; width: min(290px, 46vw); max-height: 27vh;
+    height: auto; object-fit: contain;
+    /* Тень под буквами: логотип лежит поверх кадра коридора, и без неё
+       светлые места фона съедают тонкие штрихи. */
+    filter: drop-shadow(0 6px 18px rgba(0, 0, 0, .85));
+  }
+  /* Скрыто для глаза, но остаётся для скринридера. */
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip-path: inset(50%); white-space: nowrap;
+  }
+  /* Тонкая черта над названием: даёт заголовку опору и убирает ощущение
+     текста, брошенного посреди картинки. */
+  /* Черта остаётся только на экране результата: там заголовок текстовый и
+     ему нужна опора. У логотипа своя форма, и линия с ней спорит. */
+  #screen-result .brand::before {
+    content: ''; width: 54px; height: 1px;
+    background: linear-gradient(90deg, transparent, #b8833f, transparent);
+  }
+  /*
+    Компенсация разрядки.
+
+    letter-spacing добавляет пустоту ПОСЛЕ последней буквы, и она входит в
+    ширину строки. При выравнивании по центру буквы оказываются левее середины
+    ровно на половину разрядки — отсюда ощущение, что весь экран «водит в
+    сторону», хотя коробки элементов выровнены идеально.
+
+    Лечится сдвигом вправо на половину разрядки. Для однострочных заголовков
+    хватает text-indent, для многострочных ниже используется padding-left:
+    text-indent действует только на первую строку.
+  */
+  .screen h1 {
+    margin: 0; font-size: clamp(30px, 7vw, 52px); font-weight: 300;
+    letter-spacing: .22em; text-indent: .11em; color: #f0e4d4;
+    text-shadow: 0 0 26px rgba(184, 131, 63, .5), 0 4px 20px rgba(0, 0, 0, .9);
+  }
+  .screen p {
+    margin: 0; color: #8ba3b8; font-size: 16px; max-width: 26em; line-height: 1.6;
+  }
+  #menu-sub { color: #9db2c4; font-size: 17px; }
+  /* Цель отдельной строкой и акцентным цветом: это единственное, что игрок
+     обязан унести из меню, и в общем абзаце она терялась. */
+  #menu-goal {
+    color: #d0a463; font-size: 15px; letter-spacing: .1em; padding-left: .1em;
+    text-transform: uppercase; margin-top: -4px;
+  }
+  #menu-best { color: #7e93a8; font-size: 13px; letter-spacing: .08em; padding-left: .08em; margin-top: -6px; }
+  #menu-best:empty { display: none; }
+
+  /* Три правила. Точки-разделители рисуются псевдоэлементом, чтобы на узком
+     экране строка переносилась без висящих точек в начале строки. */
+  #menu-rules {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 0;
+    color: #8ba3b8; font-size: 13px; letter-spacing: .06em; padding-left: .06em; max-width: 30em;
+  }
+  #menu-rules span { padding: 0 12px; position: relative; white-space: nowrap; }
+  #menu-rules span + span::before {
+    content: ''; position: absolute; left: 0; top: 50%;
+    width: 3px; height: 3px; margin-top: -1px; border-radius: 50%;
+    background: #b8833f;
+  }
+  #menu-hint { color: #61748a; font-size: 13px; letter-spacing: .04em; padding-left: .04em; max-width: 30em; }
+  #result-stats, #night-stats { color: #cfe0ea; font-size: 18px; }
+  #result-best, #night-next { color: #b8833f; letter-spacing: .06em; padding-left: .06em; }
+  #night-milestone {
+    color: #f0d3a4; font-size: 17px; letter-spacing: .05em;
+    text-shadow: 0 0 16px rgba(226, 168, 90, .35);
+  }
+  #night-milestone:empty { display: none; }
+
+  /*
+    Минимум 78 логических px по требованию к тач-целям (п. 1.15).
+
+    Скруглением и тенью главная кнопка отделяется от прямоугольного интерфейса
+    вокруг: острые углы читались вырезанным прямоугольником, а не предметом.
+    Тень двойная — мягкая дальняя даёт объём, короткая ближняя прижимает
+    кнопку к экрану.
+  */
+  button {
+    min-width: 264px; min-height: 78px; padding: 0 30px 0 calc(30px + .16em);
+    font: inherit; font-size: 17px; font-weight: 500; letter-spacing: .16em;
+    text-transform: uppercase; color: #241704; cursor: pointer;
+    /*
+      Плоская латунь вместо глянца. Трёхстоповый градиент с бликом сверху и
+      затемнением снизу — кнопка «по умолчанию» из двухтысячных: она изображает
+      материал, которого в игре нет. Цвет остался фирменным, объём даёт тень
+      под кнопкой, а не подделка выпуклости.
+    */
+    background: #c68e46;
+    border: 0; border-radius: 16px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, .5), 0 14px 34px rgba(0, 0, 0, .6);
+    transition: filter .15s, transform .1s, box-shadow .15s;
+  }
+  button:hover { filter: brightness(1.08); }
+  button:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .5), 0 6px 16px rgba(0, 0, 0, .55);
+  }
+  button:focus-visible { outline: 2px solid #f0e4d4; outline-offset: 3px; }
+
+  /*
+    Круглые кнопки настроек.
+
+    Раньше это были две прямоугольные плашки с надписями «ЗВУК ВКЛЮЧЁН» и «EN».
+    Они спорили с главной кнопкой по весу и занимали строку текстом там, где
+    хватает значка. Кружок со значком читается быстрее и не претендует на
+    внимание.
+  */
+  button.round {
+    min-width: 78px; width: 78px; min-height: 78px; height: 78px;
+    padding: 0; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(14, 19, 28, .72);
+    color: #cfe0ea;
+    box-shadow:
+      inset 0 0 0 1px rgba(184, 131, 63, .45),
+      inset 0 1px 0 rgba(255, 233, 190, .12),
+      0 8px 20px rgba(0, 0, 0, .5);
+  }
+  button.round:hover {
+    filter: none;
+    background: rgba(24, 31, 42, .85);
+    box-shadow:
+      inset 0 0 0 1px rgba(224, 170, 92, .8),
+      0 8px 22px rgba(0, 0, 0, .55);
+  }
+  button.round svg { width: 34px; height: 34px; display: block; }
+  /* Выключенный звук: значок гаснет и получает перечёркивание. */
+  button.round.off { color: #5b6b7c; }
+  button.round.off .mute { display: block; }
+  button.round .mute { display: none; }
+  .row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 4px; }
+
+  /*
+    Ритм меню.
+
+    У всех детей экрана был один общий отступ, и кнопка вставала в один поток
+    с текстом — читалось «кучей». Смысловые группы должны стоять плотно, а
+    между группами нужен воздух: заголовок с целью, потом пауза, потом
+    единственная главная кнопка, потом пауза, потом справочная мелочь.
+  */
+  #screen-menu { gap: 9px; }
+  #screen-menu #btn-play { margin: 28px 0 24px; }
+  #screen-menu #menu-rules { margin-top: 2px; }
+  #screen-menu .row { margin-top: 20px; }
+  #screen-result, #screen-night { gap: 9px; }
+  /*
+    Отступ на СТРОКЕ, а не на кнопке.
+
+    Стоял на `#btn-retry`, и в строке-флексбоксе с растягиванием по высоте он
+    делал одну кнопку на 22 px ниже другой: соседка растягивалась на всю высоту
+    строки, а эта — на высоту минус отступ. Выглядело как разные кнопки, хотя
+    правило было одно.
+  */
+  #screen-result .row, #screen-result #btn-revive, #screen-night .row { margin-top: 20px; }
+  /* Обе кнопки строки одного размера: растягивание по высоте выключено, размер
+     задаёт только собственное правило кнопки. */
+  .row { align-items: center; }
+  /* На телефоне «ЗВУК ВКЛЮЧЁН» с разрядкой не встаёт рядом с «EN», и строка
+     переносится в столбик, выдавливая экран вниз. Ужимаем ширину, но НЕ высоту:
+     78 px — это требование к тач-цели (п. 1.15), а не оформление. */
+  @media (max-width: 460px) {
+    .row { flex-wrap: nowrap; width: 100%; max-width: 340px; }
+    button { min-width: 0; width: 100%; max-width: 340px; }
+    button.ghost { flex: 1 1 0; padding: 0 8px; font-size: 13px; letter-spacing: .06em; }
+  }
+
+  /*
+    Интерфейс партии. Раньше это были четыре строки текста, и в них не было
+    главного: насколько игрок шумит прямо сейчас. Вся игра про звук, а
+    единственный измеритель звука был у соседа в голове.
+
+    Полосы вместо чисел сознательно: в темноте и на бегу цифру не читают, а
+    длину — видят боковым зрением.
+  */
+  #hud {
+    position: fixed; left: 18px; bottom: 18px; z-index: 10;
+    width: min(230px, 42vw); pointer-events: none;
+    font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+  }
+  .gauge { margin-bottom: 10px; }
+  .gauge .cap {
+    display: flex; justify-content: space-between;
+    color: #7e93a8; margin-bottom: 4px; text-shadow: 0 1px 4px #000;
+    min-width: 148px; gap: 14px; letter-spacing: .07em;
+  }
+  .gauge .track {
+    height: 5px; border-radius: 3px; background: rgba(120, 145, 170, .17);
+    overflow: hidden;
+  }
+  .gauge .fill { height: 100%; width: 0; border-radius: 3px; transition: width .12s linear; }
+  #bar-battery { background: linear-gradient(90deg, #7a4f1c, #e8a552); }
+  #bar-breath  { background: linear-gradient(90deg, #234a63, #63a6c9); }
+  /* Шум красный не для красоты: это единственная полоса, которую игрок хочет
+     держать пустой, и цвет должен читаться как «плохо», а не как «прогресс». */
+  #bar-noise   { background: linear-gradient(90deg, #5e2626, #d05a4e); }
+  .gauge.low .fill { animation: warn .9s ease-in-out infinite; }
+  @keyframes warn { 50% { opacity: .35; } }
+  @media (prefers-reduced-motion: reduce) { .gauge.low .fill { animation: none; } }
+
+  #hud-top {
+    position: fixed; left: 0; right: 0; top: 16px; z-index: 10;
+    text-align: center; pointer-events: none;
+    font-size: 13px; letter-spacing: .3em; padding-left: .3em; color: #8098ad;
+    text-shadow: 0 2px 8px #000;
+  }
+  #hud-state {
+    position: fixed; left: 0; right: 0; bottom: 26px; z-index: 10;
+    text-align: center; pointer-events: none;
+    font-size: 15px; letter-spacing: .12em; padding-left: .12em; color: #b8833f;
+    text-shadow: 0 2px 8px #000;
+  }
+  #hud-state.alarm { color: #e2685a; }
+  #lesson {
+    position: fixed; left: 50%; top: 38%; transform: translate(-50%, -50%);
+    z-index: 12; pointer-events: none;
+    max-width: min(560px, 84vw); text-align: center;
+    padding: 14px 22px; border-radius: 12px;
+    background: rgba(8, 10, 16, .74);
+    border: 1px solid rgba(226, 168, 90, .35);
+    color: #f0d3a4; font-size: 19px; line-height: 1.35; letter-spacing: .04em;
+    text-shadow: 0 2px 10px #000;
+    transition: opacity .28s ease;
+  }
+  #lesson.hidden { opacity: 0; }
+
+  /*
+    Всплывающее «+220» от места, где подняли батарейку.
+
+    Раньше счёт менялся молча и виден был только в конце ночи. Разница между
+    «я собираю» и «идёт какой-то учёт» — ровно в этом числе, вылетающем
+    из-под руки. Слой не ловит указатель: он поверх игры, а игра под ним живая.
+  */
+  #floaters { position: fixed; inset: 0; z-index: 11; pointer-events: none; overflow: hidden; }
+  #guide {
+    position: fixed; z-index: 11; transform: translate(-50%, -50%);
+    pointer-events: none;
+    padding: 4px 9px; border-radius: 999px;
+    border: 1px solid rgba(255, 202, 122, .7);
+    background: rgba(8, 10, 16, .5);
+    color: #ffca7a; font-size: 12px; letter-spacing: .08em;
+    text-shadow: 0 1px 6px #000;
+    animation: пульс 1.8s ease-in-out infinite;
+  }
+  #guide.hidden { display: none; }
+  @keyframes пульс { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { #guide { animation: none; opacity: .8; } }
+  .floater {
+    position: absolute; transform: translate(-50%, -50%);
+    font-size: 22px; font-weight: 700; letter-spacing: .04em;
+    color: #f0d3a4; text-shadow: 0 2px 10px #000, 0 0 18px rgba(226, 168, 90, .5);
+    animation: всплытие 1s cubic-bezier(.2, .7, .3, 1) forwards;
+  }
+  .floater.big { font-size: 30px; color: #ffd9a0; }
+  @keyframes всплытие {
+    0%   { opacity: 0; transform: translate(-50%, -50%) scale(.7); }
+    18%  { opacity: 1; transform: translate(-50%, -60%) scale(1.08); }
+    100% { opacity: 0; transform: translate(-50%, -160%) scale(1); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .floater { animation-duration: 2.4s; }
+  }
+  @media (max-height: 480px) { #lesson { font-size: 16px; padding: 10px 16px; top: 34%; } }
+  /* На телефоне центрированная строка состояния налезает на полосы слева:
+     ширины не хватает разойтись по горизонтали, поэтому расходимся по высоте. */
+  @media (max-width: 460px) {
+    #hud { width: 60vw; }
+    #hud-state { bottom: 136px; }
+    /* Часы центрируются в свободной части строки: справа стоит кнопка паузы
+       шириной 78 px, и на узком экране строка «23:04 · БАТАРЕЙКИ 0/6»
+       доезжала прямо до неё. */
+    #hud-top { right: 100px; font-size: 12px; letter-spacing: .2em; }
+  }
+
+  /*
+    Низкий экран — это горизонтальный телефон, то есть ЕДИНСТВЕННАЯ поддержанная
+    ориентация на мобильных.
+
+    Прежняя правка вёрстки шла по `max-width: 460px` и на 844×390 не срабатывала
+    вовсе: интерфейс налезал сам на себя ровно там, где в него будут играть.
+    Ловится только замером пересечений в горизонтальном окне — на глаз в
+    портрете этого не видно никогда.
+
+    Строку состояния уводим наверх под часы: внизу её зажимают полосы слева и
+    кнопка фонаря справа, а по высоте там всего 390 px. Часам и строке задаём
+    поля по 100 px, чтобы их коробки не доходили до угловых кнопок.
+  */
+  @media (max-height: 480px) {
+    #hud { width: min(200px, 26vw); bottom: 12px; font-size: 11px; }
+    .gauge { margin-bottom: 6px; }
+    #hud-top { top: 10px; left: 100px; right: 100px; font-size: 12px; letter-spacing: .16em; }
+    #hud-state {
+      top: 34px; bottom: auto; left: 100px; right: 100px;
+      font-size: 13px;
+    }
+    #btn-pause, #btn-light { width: 78px; height: 78px; }
+    #btn-light { bottom: 12px; }
+
+    /*
+      Экраны на телефоне в альбоме.
+
+      Содержимое меню — 446 px при высоте экрана 390: сверху срезался
+      заголовок, снизу круглые кнопки звука и языка. Раньше этого никто не
+      видел, потому что мобильная проверка смотрит управление и наложения, а
+      выход за экран не меряет.
+
+      Режем то, без чего игрок обойдётся: воздух между блоками, размер
+      заголовка и подсказку про управление — она дублирует то, что и так
+      понятно с первого касания. Кнопки при этом остаются 78 px: требование
+      к тач-целям важнее компактности.
+    */
+    .screen { gap: 6px; padding: 10px; }
+    /*
+      Режется ЛОГОТИП, а не заголовок.
+
+      Видимое название — картинка #menu-logo внутри .brand; <h1> лежит рядом
+      скрытым для читалки. Две попытки ужать `.screen h1` не сдвинули ничего
+      ровно поэтому: правился элемент высотой в один пиксель.
+    */
+    #menu-logo { max-height: 19vh; width: min(220px, 34vw); }
+    .brand { gap: 4px; margin-bottom: 0; }
+
+    /*
+      Экран результата режется так же, как меню, — и это выяснилось на живом
+      телефоне, а не здесь. У меню название картинкой, а у результата и ночи
+      это настоящий <h1> в 52 px: правило для него я снял, когда переводил меню
+      на логотип, и на 360 px высоты нижний ряд кнопок уехал за край. В Safari
+      хуже, чем в приложении: там сверху и снизу ещё панели браузера.
+    */
+    .screen h1 { font-size: clamp(22px, 3.4vw, 30px); letter-spacing: .16em; line-height: 1.15; }
+    #result-stats, #night-stats { font-size: 14px; }
+    #result-best, #night-next { font-size: 13px; }
+    .screen p { line-height: 1.4; }
+    .row { gap: 8px; }
+    #screen-result .row, #screen-night .row { margin-top: 4px; }
+    #menu-sub { font-size: 14px; line-height: 1.4; }
+    #menu-goal { font-size: 13px; margin-top: -2px; }
+    #menu-best { font-size: 12px; margin-top: -4px; }
+    #menu-rules { font-size: 12px; gap: 2px 0; }
+    #menu-hint { display: none; }
+
+    /*
+      Поля между блоками меню заданы отдельными правилами с большей
+      специфичностью (`#screen-menu #btn-play` и подобные), и одним `gap` их не
+      перебить — первая попытка правки это и показала: отступы остались 24 px,
+      а меню не влезло второй раз подряд. Гасим их поимённо.
+    */
+    #screen-menu { gap: 6px; }
+    #screen-menu #btn-play { margin: 10px 0 8px; }
+    #screen-menu #menu-rules { margin-top: 0; }
+    #screen-menu .row { margin-top: 8px; }
+  }
+
+  /*
+    Совсем низкие экраны — 360 px и меньше. Их немало: половина ходовых
+    телефонов в альбоме даёт именно столько. Здесь режется только заголовок:
+    он двухстрочный и стоит дороже всех остальных блоков вместе.
+  */
+  @media (max-height: 380px) {
+    #menu-logo { max-height: 16vh; width: min(190px, 30vw); }
+    .screen h1 { font-size: clamp(20px, 2.8vw, 24px); }
+    #result-stats, #night-stats { font-size: 13px; }
+    #result-best, #night-next { font-size: 12px; }
+    #screen-menu { gap: 4px; }
+    .screen { padding: 8px; }
+    #screen-menu #btn-play { margin: 6px 0 4px; }
+    #screen-menu .row { margin-top: 4px; }
+  }
+
+  #vignette {
+    position: fixed; inset: 0; z-index: 5; pointer-events: none;
+    box-shadow: inset 0 0 220px 90px rgba(0, 0, 0, .92);
+  }
+  /* Рамка тревоги: наливается по мере приближения соседа. Проигрыш обязан
+     иметь предупреждение, иначе он читается как случайность. */
+  /*
+     Градиент, а не тень с размытием.
+
+     Тенью пришлось трижды угадывать растекание: на 60px рамка ползла к центру
+     и заливала весь кадр, на 0px краснота исчезала совсем — при полной
+     непрозрачности в кадре не было ни одного красного пикселя, потому что
+     чёрная виньетка под ней съедала цвет. У градиента граница задаётся прямо:
+     до 46% радиуса чисто, дальше набирает силу к краю.
+  */
+  #danger {
+    position: fixed; inset: 0; z-index: 6; pointer-events: none; opacity: 0;
+    transition: opacity .25s linear;
+    background: radial-gradient(ellipse at 50% 50%,
+      rgba(168, 32, 24, 0) 46%, rgba(178, 34, 26, .5) 78%, rgba(190, 38, 28, .82) 100%);
+  }
+
+  /*
+    Пауза.
+
+    В браузере Esc при захваченном указателе перехватить нельзя — его съедает
+    сам браузер, освобождая мышь. Поэтому пауза вешается не на клавишу, а на
+    потерю захвата: игрок жмёт Esc, указатель освобождается, игра встаёт. Тот
+    же экран закрывает и переключение вкладки.
+
+    Раньше на этом месте была просто просьба кликнуть, и игра при этом
+    продолжала идти — сосед ходил, заряд тратился, а игрок не мог ни смотреть,
+    ни выйти.
+  */
+  #pause {
+    position: fixed; inset: 0; z-index: 24; display: none;
+    flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+    background: rgba(4, 6, 12, .88); padding: 28px; text-align: center;
+  }
+  #pause.on { display: flex; }
+  #pause h2 {
+    margin: 0; font-size: clamp(24px, 5vw, 34px); font-weight: 300;
+    letter-spacing: .3em; text-indent: .15em; color: #f0e4d4;
+  }
+  #pause-hint { color: #61748a; font-size: 13px; max-width: 26em; line-height: 1.6; }
+
+  /*
+    Кнопки для тача: там нет ни клавиш, ни захвата указателя.
+
+    Фонарь здесь не удобство, а условие играбельности: погасить свет — главный
+    способ уцелеть, и без кнопки он был доступен только с клавиатуры. На
+    телефоне игра оставалась без своей центральной механики.
+
+    Обе кнопки — обычные элементы поверх канваса, поэтому касание по ним не
+    доходит до обработчика обзора и не крутит камеру.
+  */
+  #btn-pause, #btn-light {
+    position: fixed; z-index: 11;
+    min-width: 78px; min-height: 78px; width: 78px; padding: 0;
+    display: none; align-items: center; justify-content: center;
+    background: rgba(10, 14, 22, .55); color: #cfe0ea; font-size: 20px;
+    box-shadow: inset 0 0 0 1px rgba(157, 178, 196, .3);
+  }
+  #btn-pause { right: 14px; top: 12px; }
+  /* Снизу справа — под большим пальцем. Сверху её пришлось бы искать. */
+  #btn-light { right: 14px; bottom: 18px; }
+
+  /*
+    Значки рисуются, а не набираются символами.
+
+    Было: пауза знаком деванагари, фонарь — символом солнца. Оба зависят от
+    шрифта на машине игрока: где-то встанут ровно, где-то съедут по базовой
+    линии, где-то подменятся эмодзи в цвете. Две полосы и круг с лучами
+    выглядят одинаково везде и весят меньше глифа.
+  */
+  #btn-pause::before, #btn-pause::after {
+    content: ''; width: 5px; height: 22px; border-radius: 1px;
+    background: currentColor; margin: 0 3px;
+  }
+  #btn-light::before {
+    content: ''; width: 14px; height: 14px; border-radius: 50%;
+    background: currentColor;
+    box-shadow:
+      0 -11px 0 -5px currentColor, 0 11px 0 -5px currentColor,
+      -11px 0 0 -5px currentColor, 11px 0 0 -5px currentColor;
+  }
+  #btn-pause.on, #btn-light.on { display: flex; }
+
+  /*
+    Просьба повернуть телефон.
+
+    Игра от первого лица с раздельными зонами «движение слева, обзор справа»
+    в портрете нерабочая: зоны получаются в палец шириной, а обзор по
+    горизонтали обрезан вдвое. Поэтому на узком экране показываем заслон,
+    а партию ставим на паузу — продолжать вслепую хуже, чем остановиться.
+
+    Заслон только для тач-ввода: на десктопе узкое окно это выбор игрока,
+    и требовать от него разворачивать монитор было бы странно.
+  */
+  #rotate {
+    position: fixed; inset: 0; z-index: 30; display: none;
+    flex-direction: column; align-items: center; justify-content: center; gap: 22px;
+    background: #04060c; padding: 32px; text-align: center;
+  }
+  #rotate.on { display: flex; }
+  #rotate p { color: #cfe0ea; font-size: 17px; max-width: 18em; line-height: 1.6; }
+  #rotate-icon {
+    width: 96px; height: 58px; border: 2px solid #b8833f; border-radius: 8px;
+    position: relative; animation: turn 2.4s ease-in-out infinite;
+  }
+  #rotate-icon::after {
+    content: ''; position: absolute; right: 6px; top: 50%; margin-top: -3px;
+    width: 6px; height: 6px; border-radius: 50%; background: #b8833f;
+  }
+  @keyframes turn {
+    0%, 30% { transform: rotate(90deg); }
+    60%, 100% { transform: rotate(0deg); }
+  }
+  @media (prefers-reduced-motion: reduce) { #rotate-icon { animation: none; } }
+  #btn-light.off { color: #55677a; box-shadow: inset 0 0 0 1px rgba(157, 178, 196, .16); }
+
+  #preloader {
+    position: fixed; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 14px;
+    background: #04060c; z-index: 40; transition: opacity .35s;
+  }
+  #preloader.hidden { opacity: 0; pointer-events: none; }
+  #spin {
+    width: 40px; height: 40px; border-radius: 50%;
+    border: 3px solid #1b2536; border-top-color: #b8833f;
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { #spin { animation: none; } }
+
+  #game-help { position: fixed; left: -9999px; }
+  #game-help:focus { left: 12px; bottom: 12px; background: #18223b; padding: 8px 12px; border-radius: 8px; }
+
+  /* First-session UI: persistent controls and readable compact layouts. */
+  .screen { overflow-y: auto; justify-content: safe center; }
+  #screen-menu { gap:10px; padding:18px; }
+  #screen-menu #btn-play { margin:8px 0; }
+  #screen-menu #btn-torch { min-height:44px; padding:8px 18px; font-size:13px; }
+  #screen-menu .row { margin-top:4px; }
+  #menu-logo { max-height:20vh; }
+  #menu-hint { color:#a4b4bf; }
+  #touch-controls { position: fixed; inset: 0; pointer-events: none; z-index: 12; }
+  #touch-controls.hidden { display: none; }
+  #lesson.hidden, #preloader.hidden { display: none; }
+  #stick { position:absolute; left:max(22px, env(safe-area-inset-left)); bottom:72px; width:96px; height:96px; border:2px solid #d0b88a88; border-radius:50%; background:#10171566; }
+  #stick-knob { position:absolute; left:28px; top:28px; width:36px; height:36px; border-radius:50%; background:#d0b88abb; }
+  #stick-label { display:none; }
+  #look-label { position:absolute; right:130px; bottom:95px; color:#eedcc0aa; font-size:12px; }
+  #pace { position:absolute; left:max(12px, env(safe-area-inset-left)); bottom:max(10px, env(safe-area-inset-bottom)); display:flex; gap:6px; pointer-events:auto; }
+  #pace button { min-width:56px; min-height:44px; padding:8px; font-size:12px; border:1px solid #bca98066; background:#111b19e8; color:#eedcc0; }
+  #pace button[aria-pressed="true"] { background:#dbc294; color:#15201c; border-color:#fff0cc; }
+  body:has(#touch-controls:not(.hidden)) #hud { top:8px; bottom:auto; width:156px; left:12px; }
+  body:has(#touch-controls:not(.hidden)) #hud .gauge { margin:2px 0; }
+  body:has(#touch-controls:not(.hidden)) #hud .gauge .cap { font-size:12px; white-space:nowrap; }
+  body:has(#touch-controls:not(.hidden)) #pace { display:none; }
+  body:has(#touch-controls:not(.hidden)) #hud-header { top:6px; left:50%; right:auto; width:max-content; max-width:calc(100vw - 190px); transform:translateX(-50%); gap:3px; }
+  body:has(#touch-controls:not(.hidden)) #hud-header #hud-top,
+  body:has(#touch-controls:not(.hidden)) #hud-header #hud-state { font-size:11px; line-height:1.2; padding:3px 6px; white-space:nowrap; }
+  body:has(#touch-controls:not(.hidden)) #hud-prompts { bottom:104px; width:min(470px,62vw); gap:4px; }
+  body:has(#touch-controls:not(.hidden)) #hud-prompts #story-cue,
+  body:has(#touch-controls:not(.hidden)) #hud-prompts #closet-hint,
+  body:has(#touch-controls:not(.hidden)) #hud-prompts #light-notice { font-size:12px; line-height:1.25; padding:5px 8px; }
+  #lesson { top:25%; max-width:min(540px,60vw); font-size:clamp(14px,2vw,19px); pointer-events:none; }
+  #guide { pointer-events:none; }
+  .progress-copy { color:#d7b97d; font-size:13px; max-width:34em; }
+  #result-reason { max-width:36em; font-size:16px; color:#ecdfc9; }
+  #btn-torch:disabled { opacity:.8; cursor:default; }
+  #screen-menu #btn-torch { background:#15221cbb; color:#dbc294; border:1px solid #bca98066; }
+  @media(max-height:480px) {
+    #menu-hint { display:block; font-size:11px; line-height:1.25; max-width:48em; }
+    #screen-menu { gap:3px; padding:8px 12px; }
+    #screen-menu #btn-play { margin:3px 0; min-height:44px; padding:8px 18px; }
+    #menu-logo { max-height:12vh; }
+    #screen-menu .row { margin-top:2px; }
+    #screen-menu #btn-torch { min-height:32px; padding:5px 12px; font-size:12px; }
+    #screen-menu p { margin:0; }
+    #menu-sub { font-size:12px; }
+    #menu-rules { display:none; }
+    #settings-row .round { width:44px; height:44px; min-height:44px; }
+    #result-reason { font-size:13px; }
+    #lesson { top:92px; max-width:70vw; padding:7px 10px; font-size:14px; line-height:1.3; }
+    #btn-pause, #btn-light { width:56px; height:56px; min-height:44px; }
+  }
+
+
+  #btn-read { position:fixed;left:50%;top:62%;transform:translateX(-50%);z-index:15;min-height:44px;padding:10px 20px;background:#d6c39a;color:#1c241f;font-size:15px; }
+  #btn-wardrobe,#btn-peek {position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:16;font-size:14px;padding:10px 17px;min-height:44px;}
+  #btn-peek {bottom:70px;background:#282b23;color:#e5d2ad;border:1px solid #897757;}
+  #closet-hint,#story-cue {position:fixed;left:50%;bottom:124px;transform:translateX(-50%);z-index:15;max-width:55vw;text-align:center;font:14px/1.4 Georgia,serif;color:#e1cfac;background:#151811dc;padding:8px 12px;pointer-events:none;}
+  #story-cue {bottom:22px;max-width:52vw;}
+  #closet-hint.hidden,#story-cue.hidden,#ending.hidden{display:none;}
+  #ending {position:fixed;inset:0;z-index:24;pointer-events:none;}
+  #ending-veil {position:absolute;inset:0;background:#080b09;}
+  #ending-copy {position:absolute;bottom:20%;left:10%;right:10%;text-align:center;color:#ecd7b2;font:18px/1.45 Georgia,serif;text-shadow:0 2px 8px #000;}
+  #screen-menu #btn-play {margin:12px 0 2px;}
+  #btn-free {min-height:44px;padding:9px 20px;margin:0;}
+  #btn-free:disabled {background:#383b3b;color:#a3a5a1;border:1px solid #565a58;box-shadow:none;cursor:not-allowed;opacity:.7;}
+  #free-hint {font-size:12px;color:#a3aaa2;max-width:400px;margin:0 0 8px;}
+  #ending-next {position:absolute;bottom:25px;right:25px;pointer-events:auto;min-height:44px;}
+  #light-notice { position:fixed;top:17%;left:50%;transform:translateX(-50%);z-index:15;color:#f4d5a1;background:#211b15e8;border:1px solid #a98554;padding:10px 16px;text-align:center;pointer-events:none;font-size:14px;max-width:62vw; }
+  #light-notice.hidden,#journal.hidden { display:none; }
+  #journal { position:fixed;inset:0;z-index:90;background:#090e0df5;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box; }
+  .journal-shell { width:min(880px,100%);max-height:100%;overflow:auto;color:#ded3bc;touch-action:pan-y; }
+  .journal-top { display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:14px;position:sticky;top:0;background:#0b100e;z-index:1;padding:4px 0; }
+  #journal button { min-width:0;width:auto;max-width:100%;white-space:normal;text-transform:none;letter-spacing:0;border-radius:4px;box-shadow:none; }
+  #journal-pages button { background:#152019;color:#c6b99c;border:1px solid #655c45; }
+  .journal-top h2 { font-family:Georgia,serif;font-weight:normal;margin:0;font-size:24px;flex:1; }
+  .journal-top button { min-height:44px;padding:9px 16px;font-size:14px; }
+  .journal-layout { display:grid;grid-template-columns:220px 1fr;gap:20px; }
+  #journal-pages { display:flex;flex-direction:column;gap:8px; }
+  #journal-pages button { font-size:14px;text-align:left;min-height:44px;padding:12px;line-height:1.35; }
+  #journal-pages button[aria-pressed=true] { border-color:#c1a970;color:#f3dfb1; }
+  #journal-pages button:disabled { opacity:.42; }
+  #note-page { background:#cec09b;color:#292820;padding:24px 30px;border:1px solid #8d8064;box-shadow:0 5px 30px #0008; }
+  #note-title { font:22px/1.25 Georgia,serif;margin:0 0 18px; }
+  #note-body { font:17px/1.65 Georgia,serif;white-space:pre-line;margin:0; }
+  #note-photo {display:block;width:min(100%,300px);height:auto;margin:0 auto 18px;border:8px solid #e2d7b9;box-shadow:0 3px 12px #33271955;}
+  #note-photo[hidden] {display:none;}
+  #note-hint { font:13px/1.5 system-ui;color:#605742;border-top:1px solid #9e906d;margin-top:22px;padding-top:12px; }
+  #journal-lang { font:13px system-ui;margin-top:16px;min-height:44px;padding:8px 12px;background:transparent;color:#36372e;border:1px solid #766d55; }
+  .journal-top #journal-lang { margin-top:0;color:#d6c39a;border-color:#655c45; }
+  #btn-journal,#btn-scares { min-height:44px;padding:8px 12px;font-size:12px; }
+  #note-observation { font:14px/1.55 system-ui;color:#454a34;border-left:2px solid #80775d;padding-left:12px; }
+  #note-observation:empty { display:none; }
+  #night-story { max-width:560px;color:#d6c39e;font:16px/1.45 Georgia,serif;text-wrap:balance; }
+  #screen-night { overflow-y:auto;justify-content:safe center; }
+  @media(max-height:480px){#night-story{font-size:14px;max-width:490px;margin:4px 0;}}
+  @media(max-height:480px) {
+    #journal { padding:10px 16px; }.journal-top{margin-bottom:8px;}.journal-top h2{font-size:20px;}
+    .journal-layout{grid-template-columns:180px 1fr;gap:12px;}#note-page{padding:18px;}#note-body{font-size:16px;line-height:1.55;}
+    #screen-menu { overflow-y:auto;justify-content:safe center; }
+    #settings-row { flex-wrap:wrap;gap:6px; }
+  }
+  @media(max-width:600px) {.journal-layout{grid-template-columns:1fr;}#journal-pages{flex-direction:row;overflow-x:auto;}#journal-pages button{min-width:120px;}#note-page{padding:18px;}}
+</style>
+<style>
+  /* Localized messages wrap in flow, without sharing fixed coordinates. */
+  #hud-header {position:fixed;top:12px;left:96px;right:96px;z-index:18;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;}
+  #hud-header #hud-top,#hud-header #hud-state {position:static;inset:auto;max-width:100%;padding:4px 10px;margin:0;font:13px/1.4 Arial,sans-serif;letter-spacing:.02em;background:#080d11b8;border-radius:5px;color:#e6dfce;text-shadow:0 1px 3px #000;}
+  #hud-header #hud-state.alarm {color:#ffb58f;}
+  #hud-prompts {position:fixed;bottom:130px;left:50%;transform:translateX(-50%);z-index:17;width:min(560px,55vw);display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;}
+  #hud-prompts #closet-hint,#hud-prompts #story-cue,#hud-prompts #light-notice {position:static;inset:auto;transform:none;max-width:100%;margin:0;box-sizing:border-box;font:14px/1.4 Arial,sans-serif;letter-spacing:0;}
+  #hud-prompts #btn-read {position:static;inset:auto;transform:none;pointer-events:auto;margin:0;max-width:100%;}
+  @media(max-height:480px){#hud-header{top:8px;gap:3px;}#hud-header #hud-top,#hud-header #hud-state{font-size:12px;padding:2px 8px;}#hud-prompts{bottom:112px;}#hud-prompts #story-cue,#hud-prompts #closet-hint,#hud-prompts #light-notice{font-size:12px;padding:6px 9px;}}
+</style>
+<link rel="stylesheet" href="ui.css?v=resident-devices-v32">
+<link rel="stylesheet" href="menu-fit.css?v=resident-devices-v32">
+<script type="module" src="js/menu-fit.js?v=resident-devices-v32"></script>
+<script type="importmap">
+{
+  "imports": {
+    "three": "./vendor/three.module.js",
+    "three/addons/": "./vendor/addons/"
+  }
+}
+</script>
+</head>
+<body>
+<canvas id="view" aria-label="Ни звука" role="application"></canvas>
+<div id="vignette"></div>
+
+<div id="danger"></div>
+
+<div id="hud" class="hidden">
+  <div class="gauge" id="g-battery">
+    <div class="cap"><span id="cap-battery"></span><span id="val-battery"></span></div>
+    <div class="track"><div class="fill" id="bar-battery"></div></div>
+  </div>
+  <div class="gauge" id="g-breath">
+    <div class="cap"><span id="cap-breath"></span><span id="val-breath"></span></div>
+    <div class="track"><div class="fill" id="bar-breath"></div></div>
+  </div>
+  <div class="gauge" id="g-noise">
+    <div class="cap"><span id="cap-noise"></span><span id="val-noise"></span></div>
+    <div class="track"><div class="fill" id="bar-noise"></div></div>
+  </div>
+</div>
+<div id="hud-header"><div id="hud-top" class="hidden"></div>
+<div id="hud-state" class="hidden"></div></div>
+<!--
+  Урок первой ночи отдельным узлом, а не строкой состояния.
+
+  Сначала он жил в нижней строке — мелким, приглушённым, поверх тёмной сцены,
+  и владелец, пройдя ночь, спросил «а обучалка вообще была?». Для правила,
+  которое решает всю игру, это слишком тихо. Центр экрана, крупно и с подложкой.
+-->
+<div id="lesson" class="hidden"></div>
+<!--
+  Слой всплывающих чисел. Отдельный контейнер, а не отдельные узлы в body:
+  так их можно снести одной строкой при конце ночи, не собирая по одному.
+-->
+<div id="floaters"></div>
+<!--
+  Метка направления на первой ночи. Часть интерфейса, а не мира: свет,
+  пробивающий стену, ломает фикцию игры про темноту, а метка на экране —
+  привычная условность и никого не обманывает.
+-->
+<div id="guide" class="hidden"></div>
+
+<div id="touch-controls" class="hidden"><div id="stick"><span id="stick-knob"></span><span id="stick-label"></span></div><span id="look-label"></span><div id="pace"><button id="mode-sneak"></button><button id="mode-walk"></button><button id="mode-hurry"></button></div></div>
+<button id="btn-pause" aria-label="Пауза"></button>
+<button id="btn-light" aria-label="Фонарь"></button>
+
+<button id="btn-wardrobe" class="hidden"></button><button id="btn-peek" class="hidden"></button>
+<div id="hud-prompts"><div id="closet-hint" class="hidden"></div>
+<div id="light-notice" class="hidden" role="status"></div><button id="btn-read" class="hidden"></button>
+<div id="story-cue" class="hidden" role="status"></div></div>
+<div id="ending" class="hidden"><div id="ending-veil"></div><p id="ending-copy"></p><button id="ending-next"></button></div>
+<section id="opening" class="hidden" role="dialog" aria-modal="true" aria-labelledby="opening-title">
+  <div id="opening-veil"></div>
+  <div class="opening-tools"><button id="opening-pause" class="ghost"></button><button id="opening-skip" class="ghost"></button></div>
+  <div class="opening-panel"><h2 id="opening-title"></h2><p id="opening-copy"></p><button id="opening-next"></button></div>
+</section>
+<div id="journal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="journal-title">
+  <div class="journal-shell"><div class="journal-top"><h2 id="journal-title"></h2><span id="journal-count"></span><button id="journal-lang"></button><button id="journal-close"></button></div>
+  <div class="journal-layout"><nav id="journal-pages"></nav><article id="note-page"><h3 id="note-title"></h3><img id="note-photo" hidden src="assets/textures/viktor-lena-v1.png" alt=""><p id="note-body"></p><p id="note-hint"></p><p id="note-observation"></p><div id="note-evidence"></div></article></div></div>
+</div>
+<div id="rotate">
+  <div id="rotate-icon"></div>
+  <p id="rotate-copy"></p>
+</div>
+
+<div id="pause">
+  <h2 id="pause-title"></h2>
+  <p id="pause-hint"></p>
+  <button id="btn-resume"></button><button id="btn-pause-journal" class="ghost"></button>
+  <div class="row">
+    <button id="btn-pause-sound" class="ghost"></button>
+    <button id="btn-quit" class="ghost"></button>
+  </div>
+</div>
+
+<div id="screen-menu" class="screen hidden">
+ <div id="menu-layout">
+  <div class="menu-hero">
+  <!--
+    Логотип картинкой, а название — рядом для доступности и для правила п. 5.1.3
+    о совпадении с заголовком вкладки. Скринридеру и гейту нужен текст, глазу —
+    начертание; выбрасывать заголовок ради картинки нельзя.
+  -->
+  <div class="brand">
+    <img id="menu-logo" alt="">
+    <h1 id="menu-title" class="sr-only"></h1>
+  </div>
+  <p id="menu-sub"></p>
+  <p id="menu-goal"></p>
+  </div>
+  <div class="menu-sidebar"><div class="menu-main">
+  <button id="btn-play"></button>
+  <button id="btn-free" class="ghost" disabled aria-describedby="free-hint"></button>
+  <p id="free-hint"></p>
+  <div class="row" id="settings-row"><button id="btn-journal" class="ghost"></button><button id="btn-scares" class="ghost"></button>
+    <button id="btn-sound" class="round" aria-label="Звук">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M4 9h3.5L12 5v14l-4.5-4H4z" fill="currentColor"/>
+        <path class="wave" d="M15.5 9.2a4 4 0 0 1 0 5.6M18 7a7.5 7.5 0 0 1 0 10"
+              stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+        <path class="mute" d="M15.5 9.5l5 5m0-5l-5 5"
+              stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+      </svg>
+    </button>
+    <button id="btn-lang" class="round" aria-label="Язык">
+      <svg id="flag-ru" viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="2" y="5" width="20" height="14" rx="2.5" fill="#f2f2f2"/>
+        <path d="M2 9.7h20v4.6H2z" fill="#2b56b8"/>
+        <path d="M2 14.3h20v2.2a2.5 2.5 0 0 1-2.5 2.5h-15A2.5 2.5 0 0 1 2 16.5z" fill="#c8332c"/>
+      </svg>
+      <svg id="flag-en" viewBox="0 0 24 24" aria-hidden="true" style="display:none">
+        <rect x="2" y="5" width="20" height="14" rx="2.5" fill="#1d3a86"/>
+        <path d="M2 5l20 14M22 5L2 19" stroke="#f2f2f2" stroke-width="2.6"/>
+        <path d="M2 5l20 14M22 5L2 19" stroke="#c8332c" stroke-width="1.2"/>
+        <path d="M12 5v14M2 12h20" stroke="#f2f2f2" stroke-width="4.2"/>
+        <path d="M12 5v14M2 12h20" stroke="#c8332c" stroke-width="2.2"/>
+      </svg>
+    </button>
+  </div>
+  <button id="btn-torch" class="ghost hidden"></button>
+  <p id="menu-progress" class="progress-copy"></p>
+  <p id="menu-best"></p>
+  <button id="btn-opening" class="ghost" hidden></button>
+  </div>
+  <section class="menu-help" aria-labelledby="menu-help-title">
+    <h2 id="menu-help-title">Управление и правила</h2>
+    <div class="menu-help-content">
+  <div id="menu-rules">
+    <span id="rule-noise"></span>
+    <span id="rule-light"></span>
+    <span id="rule-hide"></span>
+  </div>
+    <p id="menu-hint"></p>
+    </div>
+  </section>
+  </div>
+ </div>
+</div>
+
+<!--
+  Экран между ночами.
+
+  Раньше последняя батарейка молча запускала следующую ночь: не было ни
+  передышки, ни понимания, что произошло, ни возможности выйти. И не было
+  законного места для рекламы — по п. 4.4 показ обязан следовать за действием
+  игрока, а «Дальше» это ровно такое действие.
+-->
+<div id="screen-night" class="screen hidden">
+  <div class="brand"><h1 id="night-title"></h1></div>
+  <p id="night-stats"></p>
+  <!--
+    Веха: чем эта ночь была особенной. Счёт не отвечает на вопрос «зачем мне
+    восьмая ночь», отвечает названное — «их стало двое», «он вас не слышал».
+    Пустая строка сама убирается, чтобы не оставлять дыру в обычную ночь.
+  -->
+  <p id="night-milestone"></p>
+  <p id="night-progress" class="progress-copy"></p>
+  <p id="night-next"></p>
+  <p id="night-story"></p>
+  <!--
+    Удвоение счёта ночи за ролик. Единственное, что оно трогает, — очки и
+    медали: на сложность, заряд и соседей не влияет никак, поэтому предложение
+    честное и игру не ломает.
+  -->
+  <button id="btn-night-double" class="ghost hidden"></button>
+  <div class="row">
+    <button id="btn-next"></button>
+    <button id="btn-night-menu" class="ghost"></button>
+  </div>
+</div>
+
+<div id="screen-result" class="screen hidden">
+  <div class="brand"><h1 id="result-title"></h1></div>
+  <p id="result-stats"></p>
+  <p id="result-reason"></p><p id="result-progress" class="progress-copy"></p>
+  <p id="result-best"></p>
+  <!--
+    Кнопка второй попытки. Значок 📺 и слова «за рекламу» обязательны по
+    стандарту студии: игрок должен понимать, что нажатие откроет ролик, ДО
+    нажатия. Скрыта, когда вознаграждаемая реклама недоступна.
+  -->
+  <button id="btn-revive" class="hidden"></button>
+  <div class="row">
+    <button id="btn-retry"></button>
+    <button id="btn-menu" class="ghost"></button>
+  </div>
+</div>
+
+<div id="preloader">
+  <div id="spin"></div>
+  <div id="preloader-copy">Загрузка…</div>
+</div>
+
+<p id="game-help" tabindex="0"></p>
+
+<script>
+  (function () {
+    var isText = function (el) { return el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName); };
+    document.addEventListener('contextmenu', function (e) { if (!isText(e.target)) e.preventDefault(); });
+    document.addEventListener('selectstart', function (e) { if (!isText(e.target)) e.preventDefault(); });
+    document.addEventListener('dragstart', function (e) { e.preventDefault(); });
+    document.addEventListener('gesturestart', function (e) { e.preventDefault(); });
+  }());
+</script>
+
+<!-- Слой площадки — обычный скрипт: он не модуль и нужен до старта игры. -->
+<script src="js/platform.js?v=resident-devices-v32"></script>
+<script src="js/i18n.js?v=resident-devices-v32"></script>
+<script src="js/audio.js?v=resident-devices-v32"></script>
+<script type="module" src="js/game.js?v=resident-devices-v32"></script>
+</body>
+</html>

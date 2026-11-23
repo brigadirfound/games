@@ -1,0 +1,28 @@
+// Stable IDs keep collected evidence across retries and the nightly loop.
+const rows=[
+ ['courtyard','photo',1,'Наш подъезд','Our building','На снимке тот же подъезд, в который вы вошли сегодня. На обороте: «Наш первый дом».','The photograph shows the entrance you used tonight. On the back: “Our first home.”'],
+ ['album-cover','letter',1,'Обложка альбома','Album cover','«Лена и Виктор». Между уголками остались светлые прямоугольники: снимки вынули.','“Lena and Viktor.” Pale rectangles remain between the photo corners. The pictures were removed.'],
+ ['torn-envelope','letter',1,'Конверт для Вити','Envelope for Viktor','На конверте почерк Лены: «Прочитай, прежде чем пойдёшь меня искать».','In Lena’s handwriting: “Read this before you go looking for me.”'],
+ ['cup-receipt','ticket',2,'Покупка для двоих','A purchase for two','В старом чеке две чайные чашки. На полях: «В новую квартиру».','Two teacups on an old receipt. In the margin: “For the new flat.”'],
+ ['tea-note','letter',2,'Чай у окна','Tea by the window','«Твой чай у окна. Не жди, если уснёшь раньше. Л.»','“Your tea is by the window. Don’t wait up if you get tired. L.”'],
+ ['empty-place','letter',2,'Место напротив','The opposite seat','Виктор записал: «Чашка стоит напротив моей. Вода давно холодная».','Viktor wrote: “Her cup is opposite mine. The water went cold long ago.”'],
+ ['shift-roster','ticket',3,'Три ночные смены','Three night shifts','В табеле Лены отмечены три смены. Поздние возвращения были связаны с работой.','Three nights are marked on Lena’s roster. Her late returns were work shifts.'],
+ ['window-photo','photo',3,'Окно над подъездом','Window above the entrance','На обороте снимка двора: «Наше окно — над козырьком. Твою лампу видно с остановки».','On the back of the courtyard photograph: “Our window is above the canopy. I can see your lamp from the bus stop.”'],
+ ['phone-list','letter',3,'Звонки в отделение','Calls to the ward','На листке один номер и повторяющиеся отметки времени. Виктор звонил на работу Лены снова и снова.','One phone number and repeated times. Viktor kept calling Lena’s workplace.'],
+ ['summer-photo','photo',4,'Первое лето','First summer','Лена и Виктор у дома. Она улыбается. Подпись: «До первой зимы здесь».','Lena and Viktor outside their home. She is smiling. Caption: “Before our first winter here.”'],
+ ['train-ticket','ticket',4,'Копия билета','Ticket copy','Утренний поезд, одно место. На копии Лена написала: «К сестре. Не ищи другого объяснения».','A morning train, one seat. On the copy Lena wrote: “To my sister. Don’t look for another explanation.”'],
+ ['sister-address','letter',4,'Адрес сестры','Her sister’s address','«Я приеду утром. Спасибо, что можно пожить у тебя». Письмо адресовано сестре Лены.','“I’ll arrive in the morning. Thank you for letting me stay.” The letter is addressed to Lena’s sister.'],
+ ['anna-envelope','letter',5,'Из квартиры №11','From flat 11','Конверт Анны для Лены остался незапечатанным. Соседка так и не отправила письмо.','Anna’s envelope to Lena was never sealed. The neighbour never sent it.'],
+ ['seven-marks','ticket',5,'Семь отметок','Seven marks','В календаре семь ночей подряд отмечены одной фразой: «Снова ждал на лестнице».','Seven consecutive nights on the calendar have the same note: “Waiting on the stairs again.”'],
+ ['locked-flat','letter',5,'После похорон','After the funeral','Анна: «Квартиру заперли. Но после одиннадцати я всё равно слышу его шаги».','Anna: “They locked the flat. But after eleven I can still hear his footsteps.”'],
+ ['confession-draft','letter',6,'Зачёркнутое обвинение','A crossed-out accusation','«Ты ушла с ним» зачёркнуто. Ниже: «Ты ушла от меня».','“You left with him” is crossed out. Below it: “You left me.”'],
+ ['neighbour-note','letter',6,'Сосед этажом выше','The upstairs neighbour','«Он просто шёл домой. Я даже имени его не спросил». Виктор знал, что остановил чужого человека.','“He was just going home. I never even asked his name.” Viktor knew he had stopped a stranger.'],
+ ['unsent-envelope','letter',6,'Без марки','No stamp','Конверт для Лены без марки. Признание осталось в квартире вместе с ним.','An envelope for Lena without a stamp. His confession stayed in the flat with him.'],
+ ['whole-photo','photo',7,'Сохранённый снимок','The photograph he kept','Та же фотография первого лета. На обороте: «Это было. Но это не обещание вернуться».','The same first-summer photograph. On the back: “This happened. It is not a promise to return.”'],
+ ['last-cup','letter',7,'Убрать вторую чашку','Put the second cup away','«Поставлю её в шкаф. Не надо готовить место человеку, который решил уйти».','“I’ll put it in the cupboard. I don’t need to set a place for someone who chose to leave.”'],
+ ['open-door','letter',7,'Пустить домой','Let him go home','«Если снова услышу шаги, пропущу соседа. Лампу пора погасить».','“If I hear footsteps again, I’ll let the neighbour pass. It is time to switch off the lamp.”']
+];
+export const ARCHIVE_ITEMS=rows.map(([id,kind,night,ru,en,ruBody,enBody])=>({id,kind,night,ru:{title:ru,body:ruBody},en:{title:en,body:enBody},photo:kind==='photo'?(night<=3?'assets/textures/archive-courtyard-v23.png':'assets/textures/viktor-lena-v1.png'):null}));
+export const itemsForNight=night=>ARCHIVE_ITEMS.filter(item=>item.night===night);
+export function foundArchive(platform){const saved=platform.load('archiveItemsV1',[]);return ARCHIVE_ITEMS.filter(item=>Array.isArray(saved)&&saved.includes(item.id)).map(item=>item.id);}
+export function rememberArchive(platform,id){if(!ARCHIVE_ITEMS.some(item=>item.id===id))return;const found=foundArchive(platform);if(!found.includes(id))platform.save('archiveItemsV1',[...found,id]);}

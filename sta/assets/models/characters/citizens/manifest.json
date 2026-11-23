@@ -1,0 +1,210 @@
+{
+  "date": "2026-09-14",
+  "source": "Adobe Mixamo characters via three.ws runtime library",
+  "sourceCatalog": "https://github.com/nirholas/three.ws/blob/main/public/avatars/mixamo/catalog.json",
+  "rightsStatus": "prototype-source-recorded; verify direct Adobe entitlement before publication",
+  "models": [
+    {
+      "id": "brian",
+      "file": "brian.glb",
+      "source": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/avatars/mixamo/glb/brian.glb",
+      "sourceBytes": 48399900,
+      "sourceSha256": "e1686dbf67af324baa1d9a20ec681b790b394989a6ffef32ba41ca05b2d0adf7",
+      "bytes": 1050692,
+      "sha256": "c6998994f0915c7c75b54fc2a087b554cfc2767da39198fbba603f337fdcd835",
+      "originalTriangles": 42812,
+      "triangles": 11200,
+      "textures": [
+        {
+          "size": [
+            512,
+            512
+          ],
+          "mime": "image/png"
+        }
+      ]
+    },
+    {
+      "id": "leonard",
+      "file": "leonard.glb",
+      "source": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/avatars/mixamo/glb/leonard.glb",
+      "sourceBytes": 48812052,
+      "sourceSha256": "417edf2d0a17a81783c9c58a9b5845ef67ce360580a10656ec22e60ef9fb97e0",
+      "bytes": 1878136,
+      "sha256": "e916b53d7f793931e604b42b733b8d735ee29731d7d3cbfedc896858a5f49f4c",
+      "originalTriangles": 50256,
+      "triangles": 19042,
+      "textures": [
+        {
+          "size": [
+            512,
+            512
+          ],
+          "mime": "image/png"
+        },
+        {
+          "size": [
+            512,
+            512
+          ],
+          "mime": "image/png"
+        }
+      ]
+    },
+    {
+      "id": "james",
+      "file": "james.glb",
+      "source": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/avatars/mixamo/glb/james.glb",
+      "sourceBytes": 50204384,
+      "sourceSha256": "943a974781f70a1743dc91b9371e282bf84faf5f5d7dcb96ff0fe2498098a08a",
+      "bytes": 1285188,
+      "sha256": "b3b77c2a8450ea95464b63a8e6eb785ee1e5c8e48ee384c2edad9c62f0be2289",
+      "originalTriangles": 53871,
+      "triangles": 9522,
+      "textures": [
+        {
+          "size": [
+            512,
+            512
+          ],
+          "mime": "image/png"
+        },
+        {
+          "size": [
+            512,
+            512
+          ],
+          "mime": "image/png"
+        }
+      ]
+    },
+    {
+      "id": "megan",
+      "file": "megan.glb",
+      "source": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/avatars/mixamo/glb/megan.glb",
+      "sourceBytes": 54319524,
+      "sourceSha256": "f90867e38bee4bf3cd9bbdc27eed0e31437cfe8833c11148648050650448769b",
+      "bytes": 2106968,
+      "sha256": "b0b384363ec3d08ed4f659588b3630b49a0c589b375c620ae5759f24c02a6a2d",
+      "originalTriangles": 54871,
+      "triangles": 18621,
+      "textures": [
+        {
+          "size": [
+            512,
+            512
+          ],
+          "mime": "image/png"
+        },
+        {
+          "size": [
+            512,
+            512
+          ],
+          "mime": "image/png"
+        }
+      ]
+    },
+    {
+      "id": "louise",
+      "file": "louise.glb",
+      "source": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/avatars/mixamo/glb/louise.glb",
+      "sourceBytes": 41223152,
+      "sourceSha256": "195d9e2a8da5ce4a36c7cc20ecf0c9d1d1ba0c695b09ffd7ca82b2513ea7c57e",
+      "bytes": 1547048,
+      "sha256": "162cd38c3626ddcabc64e6dace1a6a31c4fca58d262f6e3c6de217cb85659e1e",
+      "originalTriangles": 52833,
+      "triangles": 15888,
+      "textures": [
+        {
+          "size": [
+            512,
+            512
+          ],
+          "mime": "image/png"
+        },
+        {
+          "size": [
+            512,
+            512
+          ],
+          "mime": "image/png"
+        }
+      ]
+    },
+    {
+      "id": "elizabeth",
+      "file": "elizabeth.glb",
+      "source": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/avatars/mixamo/glb/elizabeth.glb",
+      "sourceBytes": 49265464,
+      "sourceSha256": "175bcbbc19290be88e1bdf392d457aa85fec89283f6dd1b3f0d1effebbf7e579",
+      "bytes": 1785296,
+      "sha256": "70b7eeabf492ad404ccdb782b919106b0b3251d12b7efe776c93c344deb4e344",
+      "originalTriangles": 48207,
+      "triangles": 17927,
+      "textures": [
+        {
+          "size": [
+            512,
+            512
+          ],
+          "mime": "image/png"
+        },
+        {
+          "size": [
+            512,
+            512
+          ],
+          "mime": "image/png"
+        }
+      ]
+    },
+    {
+      "id": "alex",
+      "file": "alex.glb",
+      "source": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/avatars/mixamo/glb/alex.glb",
+      "sourceBytes": 12042136,
+      "sourceSha256": "4c86928a83eff8c78e23dcf51e986e1d4857a21d6ee520330fc5ad00d195ba77",
+      "bytes": 868952,
+      "sha256": "0e028cc94cef230b9da774f4552836aea35abc609a391e4a6730957d37bdf4d5",
+      "originalTriangles": 41526,
+      "triangles": 9489,
+      "textures": [
+        {
+          "size": [
+            512,
+            512
+          ],
+          "mime": "image/png"
+        }
+      ]
+    },
+    {
+      "id": "swat",
+      "file": "swat.glb",
+      "source": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/avatars/mixamo/glb/swat.glb",
+      "sourceBytes": 4665404,
+      "sourceSha256": "4b9be84d30b62872059597e9a5b5456c00df4b111b8556cd94e58f9ac3ad3e3e",
+      "bytes": 1552312,
+      "sha256": "94ca7252390ddefc7a6509508369724cdd94947a98d7225c3306e6876002d501",
+      "originalTriangles": 19450,
+      "triangles": 10314,
+      "textures": [
+        {
+          "size": [
+            512,
+            512
+          ],
+          "mime": "image/png"
+        },
+        {
+          "size": [
+            512,
+            512
+          ],
+          "mime": "image/png"
+        }
+      ]
+    }
+  ]
+}

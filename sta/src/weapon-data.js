@@ -1,0 +1,26 @@
+export const WEAPONS = {
+  fist: { id: 'fist', name: 'КУЛАКИ', melee: true, dmg: 22, range: 2.4, rate: .42, infinite: true, wantedPerHit: .35 },
+  pistol: { id: 'pistol', name: 'ПИСТОЛЕТ', dmg: 36, range: 70, rate: .3, spread: .016,
+    auto: false, pickup: 34, wantedPerHit: .25, vol: .34, tone: 1, capacity: 12, reload: 1.65,
+    support: [.025, -.035, -.015], muzzle: [0, .085, .235], magazine: [0, -.10, -.015], sight: .126 },
+  uzi: { id: 'uzi', name: 'УЗИ', dmg: 15, range: 50, rate: .075, spread: .034,
+    auto: true, pickup: 150, wantedPerHit: .09, vol: .2, tone: 1.5, capacity: 30, reload: 2.05,
+    support: [0, -.008, .20], muzzle: [0, .095, .41], magazine: [0, -.16, .015], sight: .171 },
+  shotgun: { id: 'shotgun', name: 'ДРОБОВИК', dmg: 16, pellets: 8, range: 32, rate: .9,
+    spread: .15, auto: false, pickup: 24, wantedPerHit: .35, vol: .45, tone: .55, capacity: 6, reload: .68, shellReload: true,
+    support: [0, .015, .29], muzzle: [0, .095, .79], magazine: [0, -.025, .12], sight: .123 },
+  rifle: { id: 'rifle', name: 'ВИНТОВКА', dmg: 100, range: 160, rate: 1.15, spread: .0025,
+    auto: false, scope: true, pickup: 14, wantedPerHit: .4, vol: .4, tone: .8, capacity: 5, reload: 2.4,
+    support: [0, .012, .27], muzzle: [0, .094, .89], magazine: [0, -.048, .13], sight: .19 },
+  rocket: { id: 'rocket', name: 'РПГ', projectile: true, range: 180, rate: 1.9,
+    pickup: 6, wantedPerHit: 1.2, vol: .5, tone: .4, capacity: 1, reload: 3.1,
+    support: [0, -.02, .22], muzzle: [0, .14, 1.012], magazine: [0, .14, .73], sight: .301 },
+  ak47: { id: 'ak47', name: 'AK-47', dmg: 29, range: 100, rate: .10, spread: .025,
+    auto: true, pickup: 90, wantedPerHit: .15, vol: .36, tone: .85, capacity: 30, reload: 2.5,
+    support: [0, .03, .28], muzzle: [0, .09, .72], magazine: [0, -.10, .12], sight: .165 },
+  m4a1: { id: 'm4a1', name: 'M4A1', dmg: 24, range: 110, rate: .08, spread: .018,
+    auto: true, pickup: 90, wantedPerHit: .13, vol: .30, tone: 1.12, capacity: 30, reload: 2.2,
+    support: [0, .035, .29], muzzle: [0, .09, .68], magazine: [0, -.095, .12], sight: .19 },
+};
+export const WEAPON_ORDER = ['fist', 'pistol', 'uzi', 'shotgun', 'rifle', 'rocket', 'ak47', 'm4a1'];
+export function makeInventory() { return { fist: Infinity, pistol: 40, uzi: 0, shotgun: 0, rifle: 0, rocket: 0, ak47: 0, m4a1: 0 }; }
